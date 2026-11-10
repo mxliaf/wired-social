@@ -1,10 +1,10 @@
 import Destaque from "./Destaque"
 
-function Destaques(props) {
+function Destaques() {
     return (
-        <>
-            <div id="destaques">
-                <div id="containerdestaque">
+        <div id="destaques">
+            <div id="containerdestaque">
+                <div id="listadestaques">
                     <Destaque img="https://i.pinimg.com/1200x/ef/ae/80/efae80928e7c81ec9ddc6be7a65b569c.jpg" nome="1"/>
                     <Destaque img="https://i.pinimg.com/1200x/2b/a3/4e/2ba34e18f1aae91f2d8cdde577accad0.jpg" nome="2"/>
                     <Destaque img="https://i.pinimg.com/736x/65/52/3a/65523a1e799035d40378cc8f5bb419d3.jpg" nome="3"/>
@@ -13,7 +13,7 @@ function Destaques(props) {
                     <Destaque img="https://i.pinimg.com/736x/3a/c2/06/3ac206e81411832a9f5bfcfa807910bd.jpg" nome="6"/>
                 </div>
             </div>
-        </>
+        </div>
     )
 }
 

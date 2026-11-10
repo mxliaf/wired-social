@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 1600">
+  <defs>
+    <filter id="textura">
+      <feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" seed="8" />
+      <feColorMatrix values="1 0 0 0 0
+                             0 1 0 0 0
+                             0 0 1 0 0
+                             0 0 0 .18 0" />
+    </filter>
+    <filter id="desfoque">
+      <feGaussianBlur stdDeviation="75" />
+    </filter>
+    <linearGradient id="base" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#dfe9d7" />
+      <stop offset=".48" stop-color="#c5e8bc" />
+      <stop offset="1" stop-color="#e5df91" />
+    </linearGradient>
+  </defs>
+
+  <rect width="900" height="1600" fill="url(#base)" />
+  <g filter="url(#desfoque)" opacity=".78">
+    <ellipse cx="465" cy="600" rx="300" ry="390" fill="#00a96d" transform="rotate(32 465 600)" />
+    <ellipse cx="370" cy="1240" rx="250" ry="330" fill="#54d49a" transform="rotate(-35 370 1240)" />
+    <ellipse cx="810" cy="1150" rx="220" ry="430" fill="#e8d257" />
+    <ellipse cx="80" cy="1300" rx="180" ry="420" fill="#cbe36d" />
+  </g>
+  <rect width="900" height="1600" filter="url(#textura)" opacity=".5" />
+</svg>

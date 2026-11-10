@@ -1,0 +1,617 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    background-color: #f8faf7;
+    background-image:
+        linear-gradient(rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.5)),
+        url('./assets/fundo-verde.svg');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+}
+
+#root {
+    min-height: 100vh;
+}
+
+p {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+a {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: black;
+}
+
+#fullscreen {
+    box-sizing: border-box;
+}
+
+.conteudo-rotas {
+    min-height: 100vh;
+    padding-top: 82px;
+}
+
+#header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1040;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 32px;
+    background-color: rgba(255, 255, 255, 0.92);
+    border-bottom: 1px solid #e4e7ef;
+    box-shadow: 0 6px 20px rgba(36, 36, 36, 0.08);
+    backdrop-filter: blur(10px);
+    width: 100%;
+    height: 82px;
+}
+
+#logo {
+    display: flex;
+    align-items: center;
+    padding: 4px 14px;
+    border-radius: 18px;
+    color: black;
+    transition: transform 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease;
+}
+
+#textologo {
+    cursor: pointer;
+    font-size: 42px;
+    font-family: "Courier Prime", monospace;
+    font-weight: 400;
+    font-style: normal;
+    line-height: 1;
+}
+
+#botoesconta {
+    justify-content: space-between;
+    margin-left: auto;
+    display: flex;
+    gap: 8px;
+}
+
+.botoesnav {
+    display: flex;
+    min-height: 42px;
+    width: max-content;
+    padding: 8px 16px;
+    border: 1px solid #e4e7ef;
+    border-radius: 14px;
+    color: black;
+    background-color: white;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(36, 36, 36, 0.06);
+    transition: transform 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease;
+}
+
+#MainContainer {
+    padding: 20px 5px 5px;
+    display: flex;
+    justify-content: center;
+}
+
+#profileheader {
+    width: 600px;
+    max-width: 100%;
+    overflow: hidden;
+    background-color: white;
+    border: 1px solid #e4e7ef;
+    border-radius: 32px;
+    box-shadow: 0 10px 30px rgba(36, 36, 36, 0.12);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+#profilecover {
+    height: 150px;
+    background-image: url(https://i.pinimg.com/originals/35/d5/54/35d554f31bd87bf3f5097830af38332b.gif);
+    background-position: center;
+    background-size: cover;
+}
+
+#profilecontent {
+    display: flex;
+    gap: 18px;
+    padding: 0 28px 24px;
+}
+
+#profilepicture {
+    display: flex;
+    align-items: center;
+    flex: 0 0 auto;
+    margin-top: -65px;
+
+    img {
+        width: 160px;
+        height: 160px;
+        padding: 7px;
+        border-radius: 50%;
+        background-color: white;
+        object-fit: cover;
+    }
+}
+
+#textodeperfil {
+    flex: 1;
+    min-width: 0;
+    line-height: 30px;
+    padding-top: 18px;
+
+    a {
+        font-size: 16px;
+    }
+}
+
+#nome {
+    font-size: 28px;
+    display: flex;
+    min-height: 44px;
+}
+
+#nome p,
+#username p,
+#dadosnumericos p,
+#bio p {
+    margin-bottom: 8px;
+}
+
+#username {
+    line-height: 20px;
+}
+
+#dadosnumericos {
+    line-height: 22px;
+}
+
+#linkbio {
+    display: inline-flex;
+    padding: 6px 4px 2px 4px;
+    justify-content: center;
+    align-items: center;
+}
+
+#iconlink {
+    margin-right: 6px;
+}
+
+#bio {
+    line-height: 22px;
+}
+
+#barraacoes {
+    display: flex;
+    border-top: 1px solid #e4e7ef;
+    width: 100%;
+}
+
+.botoesopcoes {
+    flex: 1;
+    min-height: 58px;
+    padding: 10px;
+    border: 0;
+    border-right: 1px solid #e4e7ef;
+    background-color: white;
+    cursor: pointer;
+}
+
+.botoesopcoes:last-child {
+    border-right: 0;
+}
+
+.botao-publicar {
+    display: inline-flex;
+    min-height: 48px;
+    padding: 11px 22px;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #e4e7ef;
+    border-radius: 16px;
+    color: black;
+    background-color: white;
+    box-shadow: 0 6px 18px rgba(36, 36, 36, 0.09);
+    font-weight: 600;
+    transition: transform 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease;
+}
+
+.botao-publicar:hover {
+    color: rgb(43, 67, 60);
+    background-color: rgba(161, 195, 184, 0.25);
+    transform: translateY(-3px);
+    box-shadow: 0 10px 24px rgba(36, 36, 36, 0.14);
+}
+
+.feed-tabs {
+    display: flex;
+    width: 600px;
+    max-width: 100%;
+    padding: 7px;
+    gap: 7px;
+    border: 1px solid #e4e7ef;
+    border-radius: 18px;
+    background-color: white;
+    box-shadow: 0 6px 18px rgba(36, 36, 36, 0.09);
+}
+
+.feed-tabs .nav-item {
+    display: flex;
+    flex: 1;
+}
+
+.feed-tab {
+    width: 100%;
+    min-height: 44px;
+    padding: 8px 12px;
+    border: 0;
+    border-radius: 12px;
+    color: #4a4a4a;
+    background-color: transparent;
+    cursor: pointer;
+    transition: transform 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease, color 0.3s ease;
+}
+
+.feed-tab:hover {
+    color: rgb(43, 67, 60);
+    background-color: rgba(161, 195, 184, 0.18);
+    transform: translateY(-2px);
+    box-shadow: 0 7px 16px rgba(36, 36, 36, 0.1);
+}
+
+.feed-tab.active {
+    color: rgb(43, 67, 60);
+    background-color: rgba(161, 195, 184, 0.35);
+    box-shadow: 0 4px 12px rgba(36, 36, 36, 0.1);
+    font-weight: 600;
+}
+
+.botao-publicar:focus-visible,
+.feed-tab:focus-visible {
+    outline: 3px solid rgba(43, 67, 60, 0.25);
+    outline-offset: 2px;
+}
+
+.card-formulario {
+    width: 500px;
+    max-width: 100%;
+    overflow: hidden;
+    border: 1px solid #e4e7ef;
+    border-radius: 32px;
+    background-color: white;
+    box-shadow: 0 10px 30px rgba(36, 36, 36, 0.12);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card-formulario:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 16px 38px rgba(36, 36, 36, 0.18);
+}
+
+.card-login {
+    margin: 0 auto;
+}
+
+.titulo-login {
+    margin: 0;
+    color: rgb(43, 67, 60);
+    font-family: "Courier Prime", monospace;
+    font-size: 42px;
+    font-weight: 400;
+    line-height: 1;
+}
+
+.credenciais-login {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 12px 14px;
+    border: 1px solid #e4e7ef;
+    border-radius: 14px;
+    color: #555;
+    background-color: rgba(161, 195, 184, 0.1);
+    text-align: center;
+}
+
+.card-configuracoes {
+    width: 550px;
+}
+
+.foto-configuracao {
+    display: block;
+    padding: 5px;
+    border: 1px solid #e4e7ef;
+    outline: 2px solid rgb(161, 195, 184);
+    background-color: white;
+    box-shadow: 0 6px 18px rgba(36, 36, 36, 0.12);
+}
+
+.campo-padrao {
+    min-height: 46px;
+    border: 1px solid #e4e7ef;
+    border-radius: 14px;
+    background-color: rgba(161, 195, 184, 0.1);
+    transition: border-color 0.25s ease, box-shadow 0.25s ease, background-color 0.25s ease;
+}
+
+.campo-padrao:focus {
+    border-color: rgb(161, 195, 184);
+    background-color: white;
+    box-shadow: 0 0 0 3px rgba(161, 195, 184, 0.2);
+}
+
+.botao-formulario {
+    min-height: 46px;
+    padding: 10px 18px;
+    border: 1px solid #e4e7ef;
+    border-radius: 14px;
+    color: rgb(43, 67, 60);
+    background-color: rgba(161, 195, 184, 0.35);
+    box-shadow: 0 4px 12px rgba(36, 36, 36, 0.08);
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease;
+}
+
+.botao-formulario:hover:not(:disabled) {
+    background-color: rgba(161, 195, 184, 0.55);
+    transform: translateY(-2px);
+    box-shadow: 0 9px 20px rgba(36, 36, 36, 0.14);
+}
+
+.botao-formulario:disabled {
+    cursor: not-allowed;
+    opacity: 0.65;
+}
+
+.botao-formulario:focus-visible {
+    outline: 3px solid rgba(43, 67, 60, 0.25);
+    outline-offset: 2px;
+}
+
+.link-formulario {
+    color: rgb(43, 67, 60);
+}
+
+.link-formulario:hover {
+    color: rgb(25, 48, 41);
+    text-decoration: underline !important;
+}
+
+#destaques {
+    display: flex;
+    padding-top: 24px;
+    padding-right: 20px;
+    padding-left: 20px;
+    width: 100%;
+    align-items: center;
+    justify-content: center;
+}
+
+#containerdestaque {
+    width: 600px;
+    max-width: 100%;
+    overflow: hidden;
+    background-color: white;
+    border: 1px solid #e4e7ef;
+    border-radius: 32px;
+    box-shadow: 0 10px 30px rgba(36, 36, 36, 0.12);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+#listadestaques {
+    display: flex;
+    gap: 20px;
+    padding: 28px 26px 22px;
+    overflow-x: auto;
+}
+
+
+.destaque {
+    flex: 0 0 84px;
+    text-align: center;
+    cursor: pointer;
+    transition: transform 0.25s ease;
+
+    img {
+        display: block;
+        border-radius: 50%;
+        border: 4px solid white;
+        outline: 2px solid rgb(161, 195, 184);
+        width: 84px;
+        height: 84px;
+        object-fit: cover;
+    }
+
+    p {
+        margin: 10px 0 0;
+        font-size: 14px;
+    }
+}
+
+.post-card {
+    height: 100%;
+    border: 1px solid #e4e7ef;
+    border-radius: 20px;
+    padding: 22px;
+    width: 100%;
+    background-color: #ffffff;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(36, 36, 36, 0.04);
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.post-thumbnail {
+    display: block;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+    border-radius: 15px;
+    background-color: rgba(161, 195, 184, 0.582);
+}
+
+.post-card:hover,
+.post-card:focus-visible {
+    transform: scale(1.015);
+    box-shadow: 0 10px 24px rgba(36, 36, 36, 0.14);
+}
+
+.post-card:focus-visible {
+    outline: 3px solid rgba(13, 110, 253, 0.35);
+    outline-offset: 2px;
+}
+
+.post-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 1050;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background-color: rgba(0, 0, 0, 0.85);
+}
+
+.post-modal-conteudo {
+    position: relative;
+    max-width: 95vw;
+    max-height: 95vh;
+    padding: 16px;
+    border-radius: 12px;
+    background-color: white;
+    overflow: auto;
+}
+
+.post-modal-conteudo img {
+    display: block;
+    max-width: 100%;
+    max-height: 78vh;
+    margin: 0 auto;
+    object-fit: contain;
+}
+
+.post-modal-conteudo p {
+    margin: 12px 0 0;
+    text-align: center;
+}
+
+.post-modal-fechar {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    z-index: 1;
+    width: 38px;
+    height: 38px;
+    border: 0;
+    border-radius: 50%;
+    color: white;
+    background-color: rgba(0, 0, 0, 0.7);
+    font-size: 28px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.destaque:hover {
+    transform: translateY(-4px);
+}
+
+.botoesopcoes:hover {
+    background-color: rgba(123, 120, 120, 0.353);
+    transition: transform 0.5s ease;
+}
+
+
+#profileheader:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 16px 38px rgba(36, 36, 36, 0.18);
+}
+
+#logo:hover {
+    color: rgb(43, 67, 60);
+    background-color: rgba(161, 195, 184, 0.18);
+    transform: translateY(-3px);
+    box-shadow: 0 10px 24px rgba(36, 36, 36, 0.14);
+}
+
+.botoesnav:hover {
+    color: rgb(43, 67, 60);
+    background-color: rgba(161, 195, 184, 0.25);
+    transform: translateY(-3px);
+    box-shadow: 0 10px 24px rgba(36, 36, 36, 0.14);
+}   
+
+#containerdestaque:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 16px 38px rgba(36, 36, 36, 0.18);
+}
+
+.botoesopcoes:hover {
+    background-color: rgba(161, 195, 184, 0.25);
+    box-shadow: none;
+}
+
+@media (max-width: 576px) {
+    #header {
+        height: 70px;
+        padding: 0 14px;
+    }
+
+    .conteudo-rotas {
+        padding-top: 70px;
+    }
+
+    #textologo {
+        font-size: 34px;
+    }
+
+    .botoesnav {
+        min-height: 38px;
+        padding: 6px 10px;
+        font-size: 14px;
+    }
+
+    #profilecontent {
+        align-items: center;
+        flex-direction: column;
+        padding: 0 20px 24px;
+        text-align: center;
+    }
+
+    #textodeperfil {
+        padding-top: 0;
+    }
+
+    #nome,
+    #linkbio {
+        justify-content: center;
+    }
+
+    .botoesopcoes {
+        padding: 8px 4px;
+        font-size: 13px;
+    }
+}
+
+
+#entrar:hover {
+    transition: 0.5s;
+    transition: transform 0.5s ease;
+    box-shadow: 10px 10px 20px rgba(36, 36, 36, 0.5);
+}
+
+#cadastrar:hover {
+    transition: 0.5s;
+    transition: transform 0.5s ease;
+    box-shadow: 10px 10px 20px rgba(36, 36, 36, 0.5);
+}
+
+.bodylogin {
+    min-height: calc(100vh - 82px);
+    background-color: transparent;
+}

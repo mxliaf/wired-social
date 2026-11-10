@@ -7,10 +7,24 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
+node_modules/
+**/node_modules/
+dist/
+**/dist/
+!frontend/dist/
+!frontend/dist/**
+dist-ssr/
+**/dist-ssr/
 *.local
+.env
+.env.*
+!.env.example
+
+# Dados gerados localmente pela API
+backend/database.sqlite
+backend/database.sqlite-*
+backend/uploads/*
+!backend/uploads/.gitkeep
 
 # Editor directories and files
 .vscode/*
