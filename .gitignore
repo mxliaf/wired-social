@@ -9,16 +9,30 @@ lerna-debug.log*
 
 node_modules/
 **/node_modules/
+
+# Builds and Vercel local files
 dist/
 **/dist/
-!frontend/dist/
-!frontend/dist/**
+.vercel/
+.vite/
 dist-ssr/
+coverage/
+**/coverage/
 **/dist-ssr/
 *.local
 .env
 .env.*
 !.env.example
+
+# Local package-manager files
+.npmrc
+.pnpm-store/
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+*.swo
 
 # Dados gerados localmente pela API
 backend/database.sqlite

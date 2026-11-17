@@ -4,6 +4,19 @@ function BotoesBar() {
     return (
         <div id="botoesconta">
             <Link
+                to="/home"
+                className="botoesnav text-decoration-none"
+            >
+                Perfil
+            </Link>
+            <Link
+                to="/feed"
+                className="botoesnav text-decoration-none"
+            >
+                Feed
+            </Link>
+
+            <Link
                 to="/publicar"
                 className="botoesnav text-decoration-none"
             >

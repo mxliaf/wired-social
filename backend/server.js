@@ -1,447 +1,112 @@
 import express from 'express'
 import cors from 'cors'
-import multer from 'multer'
-import Database from 'better-sqlite3'
-import { existsSync, mkdirSync, unlinkSync } from 'node:fs'
-import { fileURLToPath } from 'node:url'
-import { basename, extname, dirname, join } from 'node:path'
-import { randomUUID } from 'node:crypto'
+import { MongoClient, ObjectId } from 'mongodb'
+import { createHmac, randomBytes, scryptSync, timingSafeEqual } from 'node:crypto'
 
 const app = express()
 const PORT = process.env.PORT || 3000
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173'
+const MONGODB_URI = process.env.MONGODB_URI
+const MONGODB_DB = process.env.MONGODB_DB || 'wired'
+const TOKEN_SECRET = process.env.TOKEN_SECRET || 'troque-este-segredo-em-producao'
 
-const arquivoAtual = fileURLToPath(import.meta.url)
-const pastaBackend = dirname(arquivoAtual)
-const pastaUploads = join(pastaBackend, 'uploads')
+app.use(cors({ origin: FRONTEND_URL.split(',').map((url) => url.trim()) }))
+app.use(express.json({ limit: '4mb' }))
 
-mkdirSync(pastaUploads, { recursive: true })
+let databasePromise
+function getDatabase() {
+  if (!MONGODB_URI) throw new Error('MONGODB_URI não configurada')
+  if (!databasePromise) {
+    const client = new MongoClient(MONGODB_URI)
+    databasePromise = client.connect().then(() => client.db(MONGODB_DB))
+  }
+  return databasePromise
+}
 
-app.use(cors({
-    origin: FRONTEND_URL,
-}))
+function senhaHash(senha, salt = randomBytes(16).toString('hex')) {
+  return `${salt}:${scryptSync(senha, salt, 64).toString('hex')}`
+}
 
+function conferirSenha(senha, armazenada) {
+  const [salt, hash] = armazenada.split(':')
+  return timingSafeEqual(scryptSync(senha, salt, 64), Buffer.from(hash, 'hex'))
+}
 
-app.use(express.json())
+function criarToken(userId) {
+  const payload = Buffer.from(JSON.stringify({ sub: userId, exp: Date.now() + 1000 * 60 * 60 * 24 * 30 })).toString('base64url')
+  const assinatura = createHmac('sha256', TOKEN_SECRET).update(payload).digest('base64url')
+  return `${payload}.${assinatura}`
+}
 
-app.use('/uploads', express.static(pastaUploads))
+function lerToken(token) {
+  if (!token) return null
+  const [payload, assinatura] = token.split('.')
+  if (!payload || !assinatura) return null
+  const esperada = createHmac('sha256', TOKEN_SECRET).update(payload).digest('base64url')
+  if (assinatura !== esperada) return null
+  const dados = JSON.parse(Buffer.from(payload, 'base64url').toString())
+  return dados.exp > Date.now() ? dados.sub : null
+}
 
-const db = new Database(join(pastaBackend, 'database.sqlite'))
+async function usuarioAtual(req) {
+  const id = lerToken(req.headers.authorization?.replace('Bearer ', ''))
+  if (!id) return null
+  const db = await getDatabase()
+  return db.collection('users').findOne({ _id: new ObjectId(id) })
+}
 
-db.exec(`
-    CREATE TABLE IF NOT EXISTS posts (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    imagem TEXT NOT NULL,
-    legenda TEXT NOT NULL,
-    criado_em TEXT DEFAULT CURRENT_TIMESTAMP
-    )
-`)
+function perfilPublico(usuario) {
+  return { id: usuario._id.toString(), nome_usuario: usuario.nome_usuario, bio: usuario.bio || '', foto: usuario.foto || 'https://i.pravatar.cc/150?img=12' }
+}
 
-db.exec(`
-    CREATE TABLE IF NOT EXISTS perfil (
-        id INTEGER PRIMARY KEY,
-        nome_usuario TEXT NOT NULL,
-        bio TEXT NOT NULL,
-        foto TEXT NOT NULL
-    )
-`)
+function postPublico(post) {
+  return { id: post._id.toString(), imagem: post.imagem, legenda: post.legenda, criado_em: post.criado_em, autor: post.autor }
+}
 
-db.prepare(`
-    INSERT OR IGNORE INTO perfil (id, nome_usuario, bio, foto)
-    VALUES (1, ?, ?, ?)
-`).run(
-    'agaetisbyrju',
-    '2005 / fashion and technology enthusiast',
-    'https://i.pinimg.com/1200x/6c/ef/fb/6ceffb9310699f63aa4cfe58b67bf2dc.jpg',
-)
-
-//colocar posts que ja tinham pq nao queria apagar
-const postsIniciais = [
-    {
-        id: 1,
-        publicacao: "https://i.pinimg.com/1200x/8d/78/29/8d78290ddb68ab61bc8c862cc5d63818.jpg",
-        descricao: "Post 1"
-    },
-    {
-        id: 2,
-        publicacao: "https://i.pinimg.com/736x/fa/25/2d/fa252d2b60abdd60387cd0fadceae975.jpg",
-        descricao: "Post 2"
-    },
-    {
-        id: 3,
-        publicacao: "https://i.pinimg.com/originals/35/d5/54/35d554f31bd87bf3f5097830af38332b.gif",
-        descricao: "Post 3"
-    },
-    {
-        id: 4,
-        publicacao: "https://i.pinimg.com/originals/dd/fe/f6/ddfef6fdb94240cb389b38e6a9a00983.gif",
-        descricao: "Post 4"
-    },
-    {
-        id: 5,
-        publicacao: "https://i.pinimg.com/736x/e0/03/0f/e0030feb585721c584bb8518d9b1d744.jpg",
-        descricao: "Post 5"
-    },
-    {
-        id: 6,
-        publicacao: "https://i.pinimg.com/1200x/6c/9d/18/6c9d18cce519748a1ba513e31c0852f7.jpg",
-        descricao: "Post 6"
-    },
-    {
-        id: 7,
-        publicacao: "https://i.pinimg.com/736x/ec/4b/78/ec4b78cefae7d3dfaf7d9e62751e4f25.jpg",
-        descricao: "Post 7"
-    },
-    {
-        id: 8,
-        publicacao: "https://i.pinimg.com/1200x/5d/55/a9/5d55a9931224e4f41eae2fe6ffadd116.jpg",
-        descricao: "Post 8"
-    },
-    {
-        id: 9,
-        publicacao: "https://i.pinimg.com/1200x/d7/d1/4f/d7d14fb6d53c9fde98e4e97330a96a30.jpg",
-        descricao: "Post 9"
-    },
-    {
-        id: 10,
-        publicacao: "https://i.pinimg.com/736x/69/03/d4/6903d410e49b043ab6917f2a59829fc7.jpg",
-        descricao: "Post 10"
-    },
-    {
-        id: 11,
-        publicacao: "https://i.pinimg.com/736x/7f/f6/16/7ff6162a8ef573e3fa2085c78c6a42e0.jpg",
-        descricao: "Post 11"
-    },
-    {
-        id: 12,
-        publicacao: "https://i.pinimg.com/1200x/5e/c7/8b/5ec78bce338be833470c4e83802b45c7.jpg",
-        descricao: "Post 12"
-    },
-    {
-        id: 13,
-        publicacao: "https://i.pinimg.com/736x/d1/05/ff/d105ff1ea475020662bbc2990ab7dede.jpg",
-        descricao: "Post 13"
-    },
-    {
-        id: 14,
-        publicacao: "https://i.pinimg.com/736x/da/f8/b0/daf8b09fab19e193d4313174cb884d63.jpg",
-        descricao: "Post 14"
-    },
+const exemplos = [
+  ['wiredbot', 'https://i.pinimg.com/1200x/8d/78/29/8d78290ddb68ab61bc8c862cc5d63818.jpg', 'Bem-vindo à comunidade Wired ✨'],
+  ['luna.codes', 'https://i.pinimg.com/736x/fa/25/2d/fa252d2b60abdd60387cd0fadceae975.jpg', 'Criando coisas bonitas na internet.'],
+  ['pixel.night', 'https://i.pinimg.com/736x/e0/03/0f/e0030feb585721c584bb8518d9b1d744.jpg', 'Inspiração para hoje.'],
 ]
 
-const inserirPostInicial = db.prepare(`
-  INSERT INTO posts (imagem, legenda)
-  SELECT ?, ?
-  WHERE NOT EXISTS (
-    SELECT 1
-    FROM posts
-    WHERE imagem = ?
-      AND legenda = ?
-  )
-`)
-
-const inserirPostsIniciais = db.transaction((posts) => {
-  for (const post of posts) {
-    inserirPostInicial.run(
-      post.publicacao,
-      post.descricao,
-      post.publicacao,
-      post.descricao,
-    )
-  }
-})
-
-const quantidadePosts = db
-  .prepare('SELECT COUNT(*) AS total FROM posts')
-  .get()
-
-if (quantidadePosts.total === 0) {
-  inserirPostsIniciais(postsIniciais)
+async function semearBanco(db) {
+  if (await db.collection('users').countDocuments() > 0) return
+  const usuarios = exemplos.map(([nome_usuario]) => ({ nome_usuario, email: `${nome_usuario.replace('.', '')}@example.com`, senha: senhaHash('123456'), bio: 'Usuário de demonstração da Wired', foto: `https://i.pravatar.cc/150?u=${nome_usuario}`, criado_em: new Date() }))
+  const resultado = await db.collection('users').insertMany(usuarios)
+  await db.collection('posts').insertMany(exemplos.map(([, imagem, legenda], index) => ({ imagem, legenda, criado_em: new Date(Date.now() - index * 3600000), autor: perfilPublico({ ...usuarios[index], _id: resultado.insertedIds[index] }) })))
 }
 
-//configurar upload da foto com Multer 
+app.get('/api/health', async (_req, res) => { try { const db = await getDatabase(); await db.command({ ping: 1 }); res.json({ ok: true, banco: 'mongodb' }) } catch (error) { res.status(503).json({ ok: false, erro: error.message }) } })
 
-const armazenamento = multer.diskStorage({
-    destination: pastaUploads,
-
-    filename(req, file, callback) {
-        const extensao = extname(file.originalname).toLowerCase()
-        const nomeArquivo = `${randomUUID()}${extensao}`
-
-        callback(null, nomeArquivo)
-    }
-
+app.post('/api/auth/register', async (req, res, next) => {
+  try {
+    const nome_usuario = req.body.nome_usuario?.trim().toLowerCase(); const email = req.body.email?.trim().toLowerCase(); const senha = req.body.senha || ''
+    if (!nome_usuario || !email || senha.length < 6) return res.status(400).json({ erro: 'Informe usuário, e-mail e senha com pelo menos 6 caracteres' })
+    const db = await getDatabase(); const existente = await db.collection('users').findOne({ $or: [{ email }, { nome_usuario }] })
+    if (existente) return res.status(409).json({ erro: 'E-mail ou nome de usuário já cadastrado' })
+    const usuario = { nome_usuario, email, senha: senhaHash(senha), bio: '', foto: `https://i.pravatar.cc/150?u=${email}`, criado_em: new Date() }; const { insertedId } = await db.collection('users').insertOne(usuario)
+    res.status(201).json({ token: criarToken(insertedId.toString()), usuario: perfilPublico({ ...usuario, _id: insertedId }) })
+  } catch (error) { next(error) }
 })
 
-const upload = multer({
-    storage: armazenamento,
-
-    fileFilter(req, file, callback) {
-        if(!file.mimetype.startsWith('image')) {
-            return callback(new Error('O arquivo precisa ser uma imagem'))
-        }
-
-        callback(null, true)
-    }
+app.post('/api/auth/login', async (req, res, next) => {
+  try { const db = await getDatabase(); const usuario = await db.collection('users').findOne({ email: req.body.email?.trim().toLowerCase() }); if (!usuario || !conferirSenha(req.body.senha || '', usuario.senha)) return res.status(401).json({ erro: 'E-mail ou senha incorretos' }); res.json({ token: criarToken(usuario._id.toString()), usuario: perfilPublico(usuario) }) } catch (error) { next(error) }
 })
 
-//funcao que faz a url da imagem
-function adicionarUrlDaApi(post, req) {
-  return {
-    ...post,
-    imagem: post.imagem.startsWith('http')
-      ? post.imagem
-      : `${req.protocol}://${req.get('host')}${post.imagem}`,
-  }
-}
+app.get('/api/perfil', async (req, res, next) => { try { const db = await getDatabase(); const usuario = await usuarioAtual(req) || await db.collection('users').findOne({ nome_usuario: 'wiredbot' }); res.json(perfilPublico(usuario)) } catch (error) { next(error) } })
+app.get('/api/posts', async (_req, res, next) => { try { const db = await getDatabase(); const posts = await db.collection('posts').find().sort({ criado_em: -1 }).limit(100).toArray(); res.json(posts.map(postPublico)) } catch (error) { next(error) } })
 
-function apagarImagemLocal(caminhoImagem) {
-  if (!caminhoImagem?.startsWith('/uploads/')) {
-    return
-  }
-
-  const caminhoArquivo = join(pastaUploads, basename(caminhoImagem))
-
-  if (existsSync(caminhoArquivo)) {
-    unlinkSync(caminhoArquivo)
-  }
-}
-
-//criar publicacao
-
-app.post('/api/posts', upload.single('imagem'), (req, res) => {
-  if (!req.file) {
-    return res.status(400).json({
-      erro: 'Selecione uma imagem',
-    })
-  }
-
-  const legenda = req.body.legenda?.trim()
-
-  if (!legenda) {
-    apagarImagemLocal(`/uploads/${req.file.filename}`)
-
-    return res.status(400).json({
-      erro: 'Digite uma legenda',
-    })
-  }
-
-  const caminhoImagem = `/uploads/${req.file.filename}`
-
-  const resultado = db
-    .prepare(`
-      INSERT INTO posts (imagem, legenda)
-      VALUES (?, ?)
-    `)
-    .run(caminhoImagem, legenda)
-
-  const post = db
-    .prepare(`
-      SELECT id, imagem, legenda, criado_em
-      FROM posts
-      WHERE id = ?
-    `)
-    .get(Number(resultado.lastInsertRowid))
-
-  res.status(201).json({
-    ...adicionarUrlDaApi(post, req),
-  })
+app.post('/api/posts', async (req, res, next) => {
+  try { const usuario = await usuarioAtual(req); if (!usuario) return res.status(401).json({ erro: 'Faça login para publicar' }); const imagem = req.body.imagem?.trim(); const legenda = req.body.legenda?.trim(); if (!imagem || !legenda) return res.status(400).json({ erro: 'Informe imagem e legenda' }); if (imagem.length > 4_000_000) return res.status(413).json({ erro: 'Imagem muito grande (máximo de 4 MB)' }); const db = await getDatabase(); const post = { imagem, legenda, criado_em: new Date(), autor: perfilPublico(usuario) }; const { insertedId } = await db.collection('posts').insertOne(post); res.status(201).json(postPublico({ ...post, _id: insertedId })) } catch (error) { next(error) }
 })
 
-//listar as publicacoes
-app.get('/api/posts', (req, res) => {
-    const posts = db
-    .prepare(`
-    SELECT id, imagem, legenda, criado_em
-    FROM posts
-    ORDER BY id DESC
-    `)
-    .all()
-
-const postsComUrl = posts.map((post) => adicionarUrlDaApi(post, req))
-
-res.json(postsComUrl)
+app.put('/api/posts/:id', async (req, res, next) => {
+  try { const usuario = await usuarioAtual(req); if (!usuario) return res.status(401).json({ erro: 'Faça login para editar' }); const db = await getDatabase(); const post = await db.collection('posts').findOne({ _id: new ObjectId(req.params.id) }); if (!post || post.autor.id !== usuario._id.toString()) return res.status(403).json({ erro: 'Você só pode editar seus próprios posts' }); const atualizacao = {}; if (typeof req.body.legenda === 'string') atualizacao.legenda = req.body.legenda.trim(); if (typeof req.body.imagem === 'string') atualizacao.imagem = req.body.imagem.trim(); await db.collection('posts').updateOne({ _id: post._id }, { $set: atualizacao }); res.json(postPublico({ ...post, ...atualizacao })) } catch (error) { next(error) }
 })
 
-// buscar publicacao pelo id 
-app.get('/api/posts/:id', (req, res) => {
-  const post = db
-    .prepare(`
-      SELECT id, imagem, legenda, criado_em
-      FROM posts
-      WHERE id = ?
-    `)
-    .get(req.params.id)
+app.delete('/api/posts/:id', async (req, res, next) => { try { const usuario = await usuarioAtual(req); if (!usuario) return res.status(401).json({ erro: 'Faça login para excluir' }); const db = await getDatabase(); const resultado = await db.collection('posts').deleteOne({ _id: new ObjectId(req.params.id), 'autor.id': usuario._id.toString() }); if (!resultado.deletedCount) return res.status(403).json({ erro: 'Você só pode excluir seus próprios posts' }); res.json({ mensagem: 'Post apagado com sucesso' }) } catch (error) { next(error) } })
+app.use((error, _req, res, _next) => { console.error(error); res.status(500).json({ erro: 'Erro interno da API' }) })
 
-  if (!post) {
-    return res.status(404).json({
-      erro: 'Post não encontrado',
-    })
-  }
-
-  res.json(adicionarUrlDaApi(post, req))
-})
-
-// editar publicacao (put no body)
-app.put('/api/posts/:id', upload.single('imagem'), (req, res) => {
-  const postAtual = db
-    .prepare(`
-      SELECT id, imagem, legenda, criado_em
-      FROM posts
-      WHERE id = ?
-    `)
-    .get(req.params.id)
-
-  
-  if (!postAtual) {
-    if (req.file) {
-      apagarImagemLocal(`/uploads/${req.file.filename}`)
-    }
-
-    return res.status(404).json({
-      erro: 'Post não encontrado',
-    })
-  }
-
-  const legendaFoiEnviada = typeof req.body.legenda === 'string'
-  const legenda = legendaFoiEnviada
-    ? req.body.legenda.trim()
-    : postAtual.legenda
-
-  if (legendaFoiEnviada && !legenda) {
-    if (req.file) {
-      apagarImagemLocal(`/uploads/${req.file.filename}`)
-    }
-
-    return res.status(400).json({
-      erro: 'A legenda não pode ficar vazia',
-    })
-  }
-
-  if (!legendaFoiEnviada && !req.file) {
-    return res.status(400).json({
-      erro: 'Envie uma legenda ou uma imagem para editar o post',
-    })
-  }
-
-  const imagem = req.file
-    ? `/uploads/${req.file.filename}`
-    : postAtual.imagem
-
-  db.prepare(`
-    UPDATE posts
-    SET imagem = ?, legenda = ?
-    WHERE id = ?
-  `).run(imagem, legenda, req.params.id)
-
-  if (req.file) {
-    apagarImagemLocal(postAtual.imagem)
-  }
-
-  const postAtualizado = db
-    .prepare(`
-      SELECT id, imagem, legenda, criado_em
-      FROM posts
-      WHERE id = ?
-    `)
-    .get(req.params.id)
-
-  res.json(adicionarUrlDaApi(postAtualizado, req))
-})
-
-// apagar uma publicacao
-app.delete('/api/posts/:id', (req, res) => {
-  const post = db
-    .prepare(`
-      SELECT id, imagem
-      FROM posts
-      WHERE id = ?
-    `)
-    .get(req.params.id)
-
-  if (!post) {
-    return res.status(404).json({
-      erro: 'Post não encontrado',
-    })
-  }
-
-  db.prepare('DELETE FROM posts WHERE id = ?').run(req.params.id)
-  apagarImagemLocal(post.imagem)
-
-  res.json({
-    mensagem: 'Post apagado com sucesso',
-    id: post.id,
-  })
-})
-
-// buscar dados (get)
-app.get('/api/perfil', (req, res) => {
-  const perfil = db
-    .prepare(`
-      SELECT nome_usuario, bio, foto
-      FROM perfil
-      WHERE id = 1
-    `)
-    .get()
-
-  res.json({
-    ...perfil,
-    foto: perfil.foto.startsWith('http')
-      ? perfil.foto
-      : `${req.protocol}://${req.get('host')}${perfil.foto}`,
-  })
-})
-
-// atualizar dados (foto, nome de usuario e bio)
-app.put('/api/perfil', upload.single('foto'), (req, res) => {
-  const nomeUsuario = req.body.nome_usuario?.trim()
-  const bio = req.body.bio?.trim()
-
-  if (!nomeUsuario || !bio) {
-    if (req.file) {
-      apagarImagemLocal(`/uploads/${req.file.filename}`)
-    }
-
-    return res.status(400).json({
-      erro: 'Preencha o nome de usuário e a bio',
-    })
-  }
-
-  const perfilAtual = db
-    .prepare('SELECT foto FROM perfil WHERE id = 1')
-    .get()
-
-  const foto = req.file
-    ? `/uploads/${req.file.filename}`
-    : perfilAtual.foto
-
-  db.prepare(`
-    UPDATE perfil
-    SET nome_usuario = ?, bio = ?, foto = ?
-    WHERE id = 1
-  `).run(nomeUsuario, bio, foto)
-
-  if (req.file) {
-    apagarImagemLocal(perfilAtual.foto)
-  }
-
-  res.json({
-    nome_usuario: nomeUsuario,
-    bio,
-    foto: foto.startsWith('http')
-      ? foto
-      : `${req.protocol}://${req.get('host')}${foto}`,
-  })
-})
-
-app.use((erro, req, res, _next) => {
-  console.error(erro)
-
-  res.status(400).json({
-    erro: erro.message || 'Erro ao enviar imagem',
-  })
-})
-
-app.listen(PORT, () => {
-    console.log(`API executando em http://localhost:${PORT}`)
-})
+if (process.env.VERCEL !== '1') app.listen(PORT, () => console.log(`API executando em http://localhost:${PORT}`))
+export default app
+if (MONGODB_URI) getDatabase().then(semearBanco).catch(console.error)

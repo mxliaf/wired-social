@@ -1,6 +1,6 @@
 # Wired — Instagram clone
 
-Projeto de estudo com frontend em React/Vite e API em Node.js, Express e SQLite.
+Projeto de estudo com frontend em React/Vite e API em Node.js, Express e MongoDB Atlas.
 
 ## Requisitos
 
@@ -30,12 +30,9 @@ Esse comando inicia:
 
 Use `Ctrl+C` para encerrar os dois processos.
 
-## Login de demonstração
+## Usuários de demonstração
 
-- E-mail: `admin@wired.com`
-- Senha: `1234`
-
-Esse login é apenas didático e não representa autenticação segura.
+Na primeira execução com um banco vazio, a API cria três usuários de exemplo. A senha de todos é `123456`.
 
 ## Rotas principais do frontend
 
@@ -63,7 +60,16 @@ O frontend usa `http://localhost:3000` como endereço padrão da API. Para mudar
 
 O backend aceita as variáveis de ambiente `PORT` e `FRONTEND_URL`. Os valores padrão são `3000` e `http://localhost:5173`.
 
-O banco `backend/database.sqlite` e os arquivos de `backend/uploads/` são criados localmente e não são enviados ao Git. Na primeira execução, a API cria o banco e insere os posts iniciais automaticamente.
+Na primeira execução com um banco MongoDB vazio, a API cria três usuários e posts de exemplo automaticamente. O cadastro é aberto pela rota `/cadastro`. Imagens novas são convertidas em data URL e guardadas no MongoDB, com limite de 4 MB para manter o deploy simples e gratuito.
+
+## Deploy gratuito no Vercel + MongoDB Atlas
+
+1. Crie um cluster gratuito no MongoDB Atlas e copie a connection string.
+2. No Vercel, importe este repositório como um único projeto.
+3. Configure as variáveis `MONGODB_URI`, `MONGODB_DB`, `TOKEN_SECRET` e `FRONTEND_URL` (a URL pública do Vercel).
+4. Faça o deploy. O `vercel.json` publica o frontend e encaminha `/api/*` para a função Node.
+
+O plano gratuito não exige servidor ligado continuamente. O banco gratuito possui limites de armazenamento e tráfego; para um projeto de estudo, essa configuração é suficiente.
 
 ## Outros comandos
 

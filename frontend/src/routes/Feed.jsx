@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import Posts from '../componentes/Posts'
-import { API_URL } from '../config/api'
+import AcoesPost from '../componentes/AcoesPost'
+import { editarLegenda, excluirPost, listarPosts } from '../services/posts'
 
 export default function Feed() {
     const [posts, setPosts] = useState([])
@@ -12,15 +13,7 @@ export default function Feed() {
     useEffect(() => {
         async function carregarPosts() {
             try {
-                const resposta = await fetch(
-                    `${API_URL}/api/posts`
-                )
-
-                if (!resposta.ok) {
-                    throw new Error('A API não conseguiu carregar os posts')
-                }
-
-                const dados = await resposta.json()
+                const dados = await listarPosts()
                 setPosts(dados)
             } catch (error) {
                 setErro(error.message)
@@ -31,6 +24,23 @@ export default function Feed() {
 
         carregarPosts()
     }, [])
+
+    async function editar(id, legenda) {
+        const postAtualizado = await editarLegenda(id, legenda)
+
+        setPosts((postsAtuais) =>
+            postsAtuais.map((post) =>
+                post.id === id ? postAtualizado : post
+            )
+        )
+        setPostSelecionado(postAtualizado)
+    }
+
+    async function excluir(id) {
+        await excluirPost(id)
+        setPosts((postsAtuais) => postsAtuais.filter((post) => post.id !== id))
+        setPostSelecionado(null)
+    }
 
     return (
         <>
@@ -146,6 +156,12 @@ export default function Feed() {
                         />
 
                         <p>{postSelecionado.legenda}</p>
+
+                        <AcoesPost
+                            post={postSelecionado}
+                            onEditar={editar}
+                            onExcluir={excluir}
+                        />
                     </div>
                 </div>
             )}

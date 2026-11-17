@@ -23,10 +23,12 @@ export default function Publicar() {
             return
         }
 
-        const formulario = new FormData()
-
-        formulario.append('imagem', imagem)
-        formulario.append('legenda', legenda)
+        const imagemComoTexto = await new Promise((resolve, reject) => {
+            const leitor = new FileReader()
+            leitor.onload = () => resolve(leitor.result)
+            leitor.onerror = reject
+            leitor.readAsDataURL(imagem)
+        })
 
         try {
             setEnviando(true)
@@ -34,7 +36,8 @@ export default function Publicar() {
 
             const resposta = await fetch(`${API_URL}/api/posts`, {
                 method: 'POST',
-                body: formulario,
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('wired_token') || ''}` },
+                body: JSON.stringify({ imagem: imagemComoTexto, legenda }),
             })
 
             const dados = await resposta.json()

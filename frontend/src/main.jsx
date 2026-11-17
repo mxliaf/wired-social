@@ -6,9 +6,10 @@ import './Instagram.css'
 import Home from './routes/Home.jsx'
 import Login from './routes/Login.jsx'
 import Config from './routes/Config.jsx'
-import Feed from './routes/Feed.jsx'
+import Timeline from './routes/Timeline.jsx'
 import Publicar from './routes/Publicar.jsx'
 import App from './App.jsx'
+import Cadastro from './routes/Cadastro.jsx'
 
 //importar react router
 
@@ -32,8 +33,12 @@ const router = createBrowserRouter(
           element: <Login />,
         },
         {
+          path: '/cadastro',
+          element: <Cadastro />,
+        },
+        {
           path: '/feed',
-          element: <Feed />,
+          element: <Timeline />,
         },
         {
           path: '/publicar',

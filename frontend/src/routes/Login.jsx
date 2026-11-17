@@ -1,8 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-
-const EMAIL_PADRAO = 'admin@wired.com'
-const SENHA_PADRAO = '1234'
+import { API_URL } from '../config/api'
 
 export default function Login() {
     const [email, setEmail] = useState('')
@@ -10,16 +8,19 @@ export default function Login() {
     const [erro, setErro] = useState('')
     const navigate = useNavigate()
 
-    function entrar(event) {
+    async function entrar(event) {
         event.preventDefault()
-
-        if (email === EMAIL_PADRAO && senha === SENHA_PADRAO) {
+        try {
+            const resposta = await fetch(`${API_URL}/api/auth/login`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, senha }) })
+            const dados = await resposta.json()
+            if (!resposta.ok) throw new Error(dados.erro)
+            localStorage.setItem('wired_token', dados.token)
+            localStorage.setItem('wired_usuario', JSON.stringify(dados.usuario))
             setErro('')
             navigate('/home')
-            return
+        } catch (error) {
+            setErro(error.message || 'Não foi possível entrar')
         }
-
-        setErro('E-mail ou senha incorretos')
     }
 
     return (
@@ -76,12 +77,7 @@ export default function Login() {
                                         </button>
 
                                         <div className="credenciais-login mt-4">
-                                            <small>
-                                                E-mail: <strong>{EMAIL_PADRAO}</strong>
-                                            </small>
-                                            <small>
-                                                Senha: <strong>{SENHA_PADRAO}</strong>
-                                            </small>
+                                            <small>Não tem conta? <a href="/cadastro">Cadastre-se</a></small>
                                         </div>
                                     </form>
 
