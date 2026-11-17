@@ -60,6 +60,8 @@ O frontend usa `http://localhost:3000` como endereço padrão da API. Para mudar
 
 O backend aceita as variáveis de ambiente `PORT` e `FRONTEND_URL`. Os valores padrão são `3000` e `http://localhost:5173`.
 
+Para rodar localmente com MongoDB, copie `backend/.env.example` para `backend/.env` e preencha `MONGODB_URI` e `TOKEN_SECRET`. Esse arquivo é ignorado pelo Git e nunca deve ser publicado.
+
 Na primeira execução com um banco MongoDB vazio, a API cria três usuários e posts de exemplo automaticamente. O cadastro é aberto pela rota `/cadastro`. Imagens novas são convertidas em data URL e guardadas no MongoDB, com limite de 4 MB para manter o deploy simples e gratuito.
 
 ## Deploy gratuito no Vercel + MongoDB Atlas
