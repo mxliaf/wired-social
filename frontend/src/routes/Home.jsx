@@ -5,6 +5,7 @@ import Feed from './Feed';
 import FotoPerfil from '../componentes/FotoPerfil';
 import IconeLink from '../componentes/IconeLink';
 import { API_URL } from '../config/api';
+import { fetchComAuth } from '../services/auth';
 
 function Home() {
     const [perfil, setPerfil] = useState({
@@ -16,7 +17,7 @@ function Home() {
     useEffect(() => {
         async function carregarPerfil() {
             try {
-                const resposta = await fetch(`${API_URL}/api/perfil`)
+                const resposta = await fetchComAuth(`${API_URL}/api/perfil`)
                 const dados = await resposta.json()
 
                 if (resposta.ok) {

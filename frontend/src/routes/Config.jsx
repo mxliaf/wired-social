@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { API_URL } from '../config/api'
+import { fetchComAuth } from '../services/auth'
 
 export default function Config() {
     const [nomeUsuario, setNomeUsuario] = useState('')
@@ -12,7 +13,7 @@ export default function Config() {
     useEffect(() => {
         async function carregarPerfil() {
             try {
-                const resposta = await fetch(`${API_URL}/api/perfil`)
+                const resposta = await fetchComAuth(`${API_URL}/api/perfil`)
                 const perfil = await resposta.json()
 
                 if (!resposta.ok) {
@@ -45,7 +46,7 @@ export default function Config() {
             setErro('')
             setMensagem('')
 
-            const resposta = await fetch(`${API_URL}/api/perfil`, {
+            const resposta = await fetchComAuth(`${API_URL}/api/perfil`, {
                 method: 'PUT',
                 body: formulario,
             })

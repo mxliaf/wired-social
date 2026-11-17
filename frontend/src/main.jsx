@@ -10,6 +10,7 @@ import Timeline from './routes/Timeline.jsx'
 import Publicar from './routes/Publicar.jsx'
 import App from './App.jsx'
 import Cadastro from './routes/Cadastro.jsx'
+import RotaProtegida from './routes/RotaProtegida.jsx'
 
 //importar react router
 
@@ -25,10 +26,6 @@ const router = createBrowserRouter(
           element: <Login />,
         },
         {
-          path: '/home',
-          element: <Home />,
-        },
-        {
           path: '/login',
           element: <Login />,
         },
@@ -37,16 +34,13 @@ const router = createBrowserRouter(
           element: <Cadastro />,
         },
         {
-          path: '/feed',
-          element: <Timeline />,
-        },
-        {
-          path: '/publicar',
-          element: <Publicar />,
-        },
-        {
-          path: '/config',
-          element: <Config />,
+          element: <RotaProtegida />,
+          children: [
+            { path: '/home', element: <Home /> },
+            { path: '/feed', element: <Timeline /> },
+            { path: '/publicar', element: <Publicar /> },
+            { path: '/config', element: <Config /> },
+          ],
         },
       ],
     },

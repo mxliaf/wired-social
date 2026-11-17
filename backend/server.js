@@ -55,6 +55,17 @@ async function usuarioAtual(req) {
   return db.collection('users').findOne({ _id: new ObjectId(id) })
 }
 
+async function exigirUsuario(req, res, next) {
+  try {
+    const usuario = await usuarioAtual(req)
+    if (!usuario) return res.status(401).json({ erro: 'Faça login para acessar esta rota' })
+    req.usuario = usuario
+    next()
+  } catch (error) {
+    next(error)
+  }
+}
+
 function perfilPublico(usuario) {
   return { id: usuario._id.toString(), nome_usuario: usuario.nome_usuario, bio: usuario.bio || '', foto: usuario.foto || 'https://i.pravatar.cc/150?img=12' }
 }
@@ -93,8 +104,8 @@ app.post('/api/auth/login', async (req, res, next) => {
   try { const db = await getDatabase(); const usuario = await db.collection('users').findOne({ email: req.body.email?.trim().toLowerCase() }); if (!usuario || !conferirSenha(req.body.senha || '', usuario.senha)) return res.status(401).json({ erro: 'E-mail ou senha incorretos' }); res.json({ token: criarToken(usuario._id.toString()), usuario: perfilPublico(usuario) }) } catch (error) { next(error) }
 })
 
-app.get('/api/perfil', async (req, res, next) => { try { const db = await getDatabase(); const usuario = await usuarioAtual(req) || await db.collection('users').findOne({ nome_usuario: 'wiredbot' }); res.json(perfilPublico(usuario)) } catch (error) { next(error) } })
-app.get('/api/posts', async (_req, res, next) => { try { const db = await getDatabase(); const posts = await db.collection('posts').find().sort({ criado_em: -1 }).limit(100).toArray(); res.json(posts.map(postPublico)) } catch (error) { next(error) } })
+app.get('/api/perfil', exigirUsuario, async (req, res, next) => { try { res.json(perfilPublico(req.usuario)) } catch (error) { next(error) } })
+app.get('/api/posts', exigirUsuario, async (_req, res, next) => { try { const db = await getDatabase(); const posts = await db.collection('posts').find().sort({ criado_em: -1 }).limit(100).toArray(); res.json(posts.map(postPublico)) } catch (error) { next(error) } })
 
 app.post('/api/posts', async (req, res, next) => {
   try { const usuario = await usuarioAtual(req); if (!usuario) return res.status(401).json({ erro: 'Faça login para publicar' }); const imagem = req.body.imagem?.trim(); const legenda = req.body.legenda?.trim(); if (!imagem || !legenda) return res.status(400).json({ erro: 'Informe imagem e legenda' }); if (imagem.length > 4_000_000) return res.status(413).json({ erro: 'Imagem muito grande (máximo de 4 MB)' }); const db = await getDatabase(); const post = { imagem, legenda, criado_em: new Date(), autor: perfilPublico(usuario) }; const { insertedId } = await db.collection('posts').insertOne(post); res.status(201).json(postPublico({ ...post, _id: insertedId })) } catch (error) { next(error) }

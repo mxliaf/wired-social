@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import PostFeed from '../componentes/PostFeed'
 import { API_URL } from '../config/api'
 import { editarLegenda, excluirPost, listarPosts } from '../services/posts'
+import { fetchComAuth } from '../services/auth'
 
 const perfilInicial = {
     nome_usuario: 'agaetisbyrju',
@@ -20,7 +21,7 @@ export default function Timeline() {
             try {
                 const [postsDaApi, respostaPerfil] = await Promise.all([
                     listarPosts(),
-                    fetch(`${API_URL}/api/perfil`),
+                    fetchComAuth(`${API_URL}/api/perfil`),
                 ])
 
                 const dadosPerfil = await respostaPerfil.json()

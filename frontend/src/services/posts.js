@@ -1,9 +1,5 @@
 import { API_URL } from '../config/api'
-
-function headersComAuth(headers = {}) {
-    const token = localStorage.getItem('wired_token')
-    return token ? { ...headers, Authorization: `Bearer ${token}` } : headers
-}
+import { fetchComAuth } from './auth'
 
 async function lerResposta(resposta) {
     const dados = await resposta.json()
@@ -16,16 +12,16 @@ async function lerResposta(resposta) {
 }
 
 export async function listarPosts() {
-    const resposta = await fetch(`${API_URL}/api/posts`)
+    const resposta = await fetchComAuth(`${API_URL}/api/posts`)
     return lerResposta(resposta)
 }
 
 export async function editarLegenda(id, legenda) {
-    const resposta = await fetch(`${API_URL}/api/posts/${id}`, {
+    const resposta = await fetchComAuth(`${API_URL}/api/posts/${id}`, {
         method: 'PUT',
-        headers: headersComAuth({
+        headers: {
             'Content-Type': 'application/json',
-        }),
+        },
         body: JSON.stringify({ legenda }),
     })
 
@@ -33,9 +29,8 @@ export async function editarLegenda(id, legenda) {
 }
 
 export async function excluirPost(id) {
-    const resposta = await fetch(`${API_URL}/api/posts/${id}`, {
+    const resposta = await fetchComAuth(`${API_URL}/api/posts/${id}`, {
         method: 'DELETE',
-        headers: headersComAuth(),
     })
 
     return lerResposta(resposta)
