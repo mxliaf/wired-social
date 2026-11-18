@@ -110,9 +110,21 @@ a {
     align-items: center;
     justify-content: center;
     margin-right: 8px;
-    color: rgb(43, 67, 60);
-    font-size: 19px;
+    color: #6f776f;
     line-height: 1;
+    transition: color 0.25s ease, transform 0.25s ease;
+}
+
+.nav-icone svg {
+    display: block;
+    width: 24px;
+    height: 24px;
+}
+
+.botoesnav:hover .nav-icone,
+.botoesnav.active .nav-icone {
+    color: rgb(43, 67, 60);
+    transform: scale(1.06);
 }
 
 .nav-item-usuario {
