@@ -15,6 +15,12 @@ import RotaProtegida from './routes/RotaProtegida.jsx'
 //importar react router
 
 import { createBrowserRouter, RouterProvider } from 'react-router-dom'
+import { Navigate } from 'react-router-dom'
+import { estaAutenticado } from './services/auth'
+
+function RotaDesconhecida() {
+  return <Navigate to={estaAutenticado() ? '/home' : '/login'} replace />
+}
 
 const router = createBrowserRouter(
   [
@@ -41,6 +47,10 @@ const router = createBrowserRouter(
             { path: '/publicar', element: <Publicar /> },
             { path: '/config', element: <Config /> },
           ],
+        },
+        {
+          path: '*',
+          element: <RotaDesconhecida />,
         },
       ],
     },

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { API_URL } from '../config/api'
 
@@ -7,6 +7,12 @@ export default function Login() {
     const [senha, setSenha] = useState('')
     const [erro, setErro] = useState('')
     const navigate = useNavigate()
+
+    useEffect(() => {
+        if (localStorage.getItem('wired_token')) {
+            navigate('/home', { replace: true })
+        }
+    }, [navigate])
 
     async function entrar(event) {
         event.preventDefault()
