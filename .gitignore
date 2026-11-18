@@ -28,6 +28,9 @@ coverage/
 .npmrc
 .pnpm-store/
 
+# Apresentação local do projeto
+apresentacao-wired/
+
 # Temporary files
 *.tmp
 *.temp

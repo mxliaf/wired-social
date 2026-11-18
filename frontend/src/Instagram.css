@@ -39,7 +39,7 @@ body {
     min-height: 100vh;
     background-color: #f8faf7;
     background-image:
-        linear-gradient(rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.5)),
+        linear-gradient(rgba(255, 255, 255, 0.78), rgba(255, 255, 255, 0.38)),
         url('./assets/fundo-verde.svg');
     background-size: cover;
     background-position: center;
@@ -48,6 +48,29 @@ body {
 
 #root {
     min-height: 100vh;
+}
+
+.app-layout {
+    position: relative;
+    min-height: 100vh;
+    isolation: isolate;
+}
+
+.fundo-terminal {
+    position: fixed;
+    z-index: -1;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+    opacity: 0.22;
+    mix-blend-mode: multiply;
+}
+
+.fundo-terminal::after {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(248, 250, 247, 0.2), rgba(216, 232, 168, 0.16));
+    content: '';
 }
 
 p {
@@ -64,8 +87,16 @@ a {
 }
 
 .conteudo-rotas {
+    position: relative;
+    z-index: 1;
     min-height: 100vh;
     padding-top: 82px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .fundo-terminal {
+        opacity: 0.14;
+    }
 }
 
 #header {
