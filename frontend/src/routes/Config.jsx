@@ -149,26 +149,37 @@ export default function Config() {
                 <h1 className="h3 mb-4">Configurações do perfil</h1>
 
                 <div className="preview-perfil-config mb-4">
-                    <div className="preview-capa-config">
+                    <label className="preview-capa-config upload-perfil" htmlFor="capa">
+                        <input id="capa" type="file" accept="image/*,.gif" className="upload-perfil-input"
+                            aria-label="Adicionar ou trocar capa" aria-describedby="ajuda-imagens-perfil"
+                            onChange={(event) => selecionarImagem(event, setCapa, setCapaPreview, 'capa')} />
                         {(capaPreview || capaAtual) ? (
                             <img src={capaPreview || capaAtual} alt="Prévia da capa" />
                         ) : (
                             <span>Sem capa</span>
                         )}
-                    </div>
+                        <span className="upload-perfil-overlay">{capaPreview || capaAtual ? 'Trocar capa' : 'Adicionar capa'}</span>
+                    </label>
 
+                    <label className="foto-configuracao preview-foto-config upload-perfil" htmlFor="foto">
+                        <input id="foto" type="file" accept="image/*,.gif" className="upload-perfil-input"
+                            aria-label="Adicionar ou trocar foto de perfil" aria-describedby="ajuda-imagens-perfil"
+                            onChange={(event) => selecionarImagem(event, setFoto, setFotoPreview, 'foto')} />
                     {(fotoPreview || fotoAtual) ? (
                         <img
                             src={fotoPreview || fotoAtual}
                             alt="Prévia da foto de perfil"
-                            className="foto-configuracao preview-foto-config"
+                            className="upload-perfil-foto"
                         />
                     ) : (
-                        <div className="foto-configuracao foto-configuracao-vazia preview-foto-config" aria-label="Perfil sem foto">
+                        <span className="upload-perfil-vazio">
                             Sem foto
-                        </div>
+                        </span>
                     )}
+                        <span className="upload-perfil-overlay">{fotoPreview || fotoAtual ? 'Trocar foto' : 'Adicionar foto'}</span>
+                    </label>
                 </div>
+                <p id="ajuda-imagens-perfil" className="form-text mb-4">Toque na foto ou na capa para escolher uma imagem ou GIF de até 2 MB. Capa ideal: 1200 × 400.</p>
 
                 <form onSubmit={salvarPerfil}>
                     <div className="mb-3">
@@ -215,36 +226,6 @@ export default function Config() {
                             maxLength="300"
                             placeholder="Conte um pouco sobre você (opcional)"
                         />
-                    </div>
-
-                    <div className="mb-3">
-                        <label htmlFor="foto" className="form-label">
-                            Nova foto de perfil
-                        </label>
-
-                        <input
-                            id="foto"
-                            type="file"
-                            accept="image/*"
-                            className="form-control campo-padrao"
-                            onChange={(event) => selecionarImagem(event, setFoto, setFotoPreview, 'foto')}
-                        />
-                        <div className="form-text">Imagem ou GIF opcional de até 2 MB.</div>
-                    </div>
-
-                    <div className="mb-3">
-                        <label htmlFor="capa" className="form-label">
-                            Nova foto de capa
-                        </label>
-
-                        <input
-                            id="capa"
-                            type="file"
-                            accept="image/*,.gif"
-                            className="form-control campo-padrao"
-                            onChange={(event) => selecionarImagem(event, setCapa, setCapaPreview, 'capa')}
-                        />
-                        <div className="form-text">Imagem ou GIF horizontal de até 2 MB. Recomendado: 1200 × 400.</div>
                     </div>
 
                     {mensagem && <p className="text-success">{mensagem}</p>}
