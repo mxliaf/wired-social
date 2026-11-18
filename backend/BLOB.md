@@ -9,7 +9,9 @@ Não selecione Pro ou trial pago. O Hobby é gratuito dentro das cotas; ao exced
 
 Posts, stories, avatar e capa novos são enviados diretamente pelo navegador ao Blob, após autorização da API. O MongoDB recebe a URL. As mídias públicas podem ser acessadas por quem possui o link.
 
-As imagens antigas em Base64 continuam sendo lidas. Não existe migração, sobrescrita nem exclusão automática de arquivos nesta integração. O início da API não executa mais a antiga correção de dados. Alterar nome ou bio sem escolher novas imagens preserva os campos antigos.
+As imagens antigas em Base64 continuam sendo lidas para compatibilidade. Em 18/11/2026, as imagens que já existiam foram copiadas e verificadas no Blob antes de seus campos no MongoDB serem trocados pelas URLs. Nenhum registro ou arquivo foi excluído. O backup local dessa operação fica em `backend/backups/`, que não entra no Git. O início da API não executa migração nem a antiga correção de dados. Alterar nome ou bio sem escolher novas imagens preserva os campos atuais.
+
+O script `migrarImagens.js` é manual e idempotente: sem argumentos, faz somente o inventário; com `--apply`, cria e verifica um backup, confere o conteúdo de todos os uploads e só depois atualiza o MongoDB. Ele não apaga imagens do MongoDB nem do Blob e evita sobrescrever uma mudança concorrente feita pelo usuário.
 
 As imagens de stories não são apagadas do Blob quando o story expira; continuam ocupando armazenamento. A expiração de 24 horas dos registros de stories já existente foi mantida. Não execute limpeza de arquivos sem backup e aprovação.
 

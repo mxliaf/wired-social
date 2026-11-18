@@ -37,6 +37,7 @@ coverage/
 # Dados gerados localmente pela API
 backend/database.sqlite
 backend/database.sqlite-*
+backend/backups/
 backend/uploads/*
 !backend/uploads/.gitkeep
 
