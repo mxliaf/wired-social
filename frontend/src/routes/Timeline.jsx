@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import PostFeed from '../componentes/PostFeed'
+import { NovoStory, StoryAvatar } from '../componentes/Stories'
 import { API_URL } from '../config/api'
 import { editarLegenda, excluirPost, listarPosts } from '../services/posts'
 import { fetchComAuth } from '../services/auth'
@@ -142,17 +143,14 @@ export default function Timeline() {
                     <small>{usuarios.length} {usuarios.length === 1 ? 'perfil' : 'perfis'}</small>
                 </div>
                 <div className="stories-lista">
-                    <button type="button" className="story-item story-item-botao" onClick={abrirComposer}>
-                        <span className="story-adicionar">+</span>
-                        <small>Novo post</small>
-                    </button>
+                    <NovoStory />
 
                     {usuarios.map((usuario) => (
-                        <Link
-                            className="story-item text-decoration-none"
+                        <div
+                            className="story-item"
                             key={usuario.id}
-                            to={usuario.id === perfil.id ? '/home' : `/perfil/${usuario.id}`}
                         >
+                            <StoryAvatar usuario={usuario}>
                             <div className="story-borda">
                                 {usuario.foto ? (
                                     <img src={usuario.foto} alt={`Foto de ${usuario.nome}`} />
@@ -160,8 +158,9 @@ export default function Timeline() {
                                     <span className="story-avatar-vazio">{usuario.nome?.charAt(0)?.toUpperCase() || '♡'}</span>
                                 )}
                             </div>
-                            <small>{usuario.id === perfil.id ? 'Você' : `@${usuario.nome_usuario}`}</small>
-                        </Link>
+                            </StoryAvatar>
+                            <Link to={usuario.id === perfil.id ? '/home' : `/perfil/${usuario.id}`} className="text-decoration-none"><small>{usuario.id === perfil.id ? 'Você' : `@${usuario.nome_usuario}`}</small></Link>
+                        </div>
                     ))}
                 </div>
             </section>

@@ -1,4 +1,5 @@
 import FotoPerfil from './FotoPerfil'
+import { StoryAvatar } from './Stories'
 
 export default function CabecalhoPerfil({ perfil }) {
     return (
@@ -12,7 +13,9 @@ export default function CabecalhoPerfil({ perfil }) {
             </div>
 
             <div id="profilecontent">
-                <FotoPerfil img={perfil.foto} />
+                <div id="profilepicture">
+                    <StoryAvatar usuario={perfil}><FotoPerfil img={perfil.foto} semContainer /></StoryAvatar>
+                </div>
                 <div id="textodeperfil">
                     <div id="nome">
                         <p><strong>{perfil.nome}</strong></p>

@@ -1,6 +1,6 @@
-function FotoPerfil({ img }) {
+function FotoPerfil({ img, semContainer = false }) {
     return (
-        <div id="profilepicture">
+        <div id={semContainer ? undefined : 'profilepicture'}>
             {img ? (
                 <img src={img} alt="Foto de perfil" className="img-fluid object-fit-cover" />
             ) : (

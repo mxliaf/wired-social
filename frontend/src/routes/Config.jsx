@@ -13,6 +13,7 @@ function lerImagem(arquivo, descricao) {
 
 export default function Config() {
     const [nome, setNome] = useState('')
+    const [email, setEmail] = useState('')
     const [nomeUsuario, setNomeUsuario] = useState('')
     const [bio, setBio] = useState('')
     const [foto, setFoto] = useState(null)
@@ -35,6 +36,7 @@ export default function Config() {
                 }
 
                 setNome(perfil.nome || '')
+                setEmail(perfil.email || '')
                 setNomeUsuario(perfil.nome_usuario || '')
                 setBio(perfil.bio || '')
                 setFotoAtual(perfil.foto || '')
@@ -182,6 +184,11 @@ export default function Config() {
                 <p id="ajuda-imagens-perfil" className="form-text mb-4">Toque na foto ou na capa para escolher uma imagem ou GIF de até 2 MB. Capa ideal: 1200 × 400.</p>
 
                 <form onSubmit={salvarPerfil}>
+                    <div className="mb-3">
+                        <label htmlFor="emailConta" className="form-label">E-mail da conta</label>
+                        <input id="emailConta" type="email" className="form-control campo-padrao" value={email} readOnly />
+                        <div className="form-text">Este é o e-mail que você usa para entrar.</div>
+                    </div>
                     <div className="mb-3">
                         <label htmlFor="nome" className="form-label">
                             Nome

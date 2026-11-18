@@ -173,6 +173,7 @@ async function corrigirDadosAntigos(db) {
 }
 
 async function prepararBanco(db) {
+  await db.collection('stories').createIndex({ expira_em: 1 }, { expireAfterSeconds: 0 })
   await semearBanco(db)
   await corrigirDadosAntigos(db)
 }
@@ -213,7 +214,59 @@ app.post('/api/auth/login', async (req, res, next) => {
   try { const db = await getDatabase(); const usuario = await db.collection('users').findOne({ email: req.body.email?.trim().toLowerCase() }); if (!usuario || !conferirSenha(req.body.senha || '', usuario.senha)) return res.status(401).json({ erro: 'E-mail ou senha incorretos' }); res.json({ token: criarToken(usuario._id.toString()), usuario: perfilPublico(usuario) }) } catch (error) { next(error) }
 })
 
-app.get('/api/perfil', exigirUsuario, async (req, res, next) => { try { res.json(perfilPublico(req.usuario)) } catch (error) { next(error) } })
+app.get('/api/perfil', exigirUsuario, async (req, res, next) => { try { res.json({ ...perfilPublico(req.usuario), email: req.usuario.email || '' }) } catch (error) { next(error) } })
+
+app.get('/api/stories', exigirUsuario, async (req, res, next) => {
+  try {
+    const db = await getDatabase()
+    const filtro = { expira_em: { $gt: new Date() } }
+    if (req.query.usuario) filtro.usuarioId = String(req.query.usuario)
+    const stories = await db.collection('stories').find(filtro, { projection: { imagem: 0 } }).sort({ criado_em: 1 }).toArray()
+    res.json(stories.map((story) => ({
+      id: String(story._id), usuarioId: story.usuarioId,
+      visto: (story.vistos || []).includes(String(req.usuario._id)),
+      expira_em: story.expira_em,
+    })))
+  } catch (error) { next(error) }
+})
+
+app.post('/api/stories', exigirUsuario, async (req, res, next) => {
+  try {
+    const imagem = req.body.imagem
+    if (typeof imagem !== 'string' || !/^data:image\/(png|jpeg|gif|webp);base64,[A-Za-z0-9+/]+={0,2}$/.test(imagem)) {
+      return res.status(400).json({ erro: 'Escolha uma imagem PNG, JPEG, WebP ou GIF' })
+    }
+    if (imagem.length > 3_500_000) return res.status(413).json({ erro: 'Escolha um story de até 2,5 MB' })
+    const db = await getDatabase()
+    await db.collection('stories').insertOne({
+      usuarioId: String(req.usuario._id), imagem, vistos: [],
+      criado_em: new Date(), expira_em: new Date(Date.now() + 24 * 60 * 60 * 1000),
+    })
+    res.status(201).json({ ok: true })
+  } catch (error) { next(error) }
+})
+
+app.get('/api/stories/:id', exigirUsuario, async (req, res, next) => {
+  try {
+    if (!ObjectId.isValid(req.params.id)) return res.status(404).json({ erro: 'Story não encontrado' })
+    const db = await getDatabase()
+    const story = await db.collection('stories').findOne({ _id: new ObjectId(req.params.id), expira_em: { $gt: new Date() } })
+    if (!story) return res.status(404).json({ erro: 'Este story expirou ou não está disponível' })
+    res.json({ imagem: story.imagem })
+  } catch (error) { next(error) }
+})
+
+app.put('/api/stories/:id/visto', exigirUsuario, async (req, res, next) => {
+  try {
+    if (!ObjectId.isValid(req.params.id)) return res.status(404).json({ erro: 'Story não encontrado' })
+    const db = await getDatabase()
+    await db.collection('stories').updateOne(
+      { _id: new ObjectId(req.params.id), expira_em: { $gt: new Date() } },
+      { $addToSet: { vistos: String(req.usuario._id) } },
+    )
+    res.json({ ok: true })
+  } catch (error) { next(error) }
+})
 
 app.get('/api/usuarios', exigirUsuario, async (_req, res, next) => {
   try {
