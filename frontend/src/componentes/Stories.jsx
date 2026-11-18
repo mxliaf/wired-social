@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 import { API_URL } from '../config/api'
 import { fetchComAuth } from '../services/auth'
+import { enviarImagem } from '../services/uploads'
 
 async function requisitar(caminho, opcoes) {
     const resposta = await fetchComAuth(`${API_URL}/api/stories${caminho}`, opcoes)
-    if (resposta.status === 413) throw new Error('A imagem é grande demais. Escolha um arquivo de até 2,5 MB.')
+    if (resposta.status === 413) throw new Error('Não foi possível enviar este arquivo.')
     const dados = await resposta.json()
     if (!resposta.ok) throw new Error(dados.erro || 'Não foi possível carregar os stories')
     return dados
@@ -108,8 +109,8 @@ export function NovoStory() {
         const arquivo = event.target.files[0]
         setImagem(''); setErro('')
         if (!arquivo) return
-        if (!['image/png', 'image/jpeg', 'image/webp', 'image/gif'].includes(arquivo.type) || arquivo.size > 2500000) {
-            setErro('Escolha PNG, JPEG, WebP ou GIF de até 2,5 MB.'); return
+        if (!['image/png', 'image/jpeg', 'image/webp', 'image/gif'].includes(arquivo.type)) {
+            setErro('Escolha PNG, JPEG, WebP ou GIF.'); return
         }
         const leitor = new FileReader()
         leitor.onload = () => setImagem(leitor.result)
@@ -121,7 +122,8 @@ export function NovoStory() {
         if (!imagem || enviando) return
         setEnviando(true); setErro('')
         try {
-            await requisitar('', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ imagem }) })
+            const imagemUrl = await enviarImagem(imagem)
+            await requisitar('', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ imagem: imagemUrl }) })
             window.dispatchEvent(new Event('wired-stories-updated'))
             setAberto(false); setImagem('')
         } catch (error) { setErro(error.message) }

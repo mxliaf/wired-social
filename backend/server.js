@@ -1,5 +1,7 @@
 import express from 'express'
 import cors from 'cors'
+import { handleUpload } from '@vercel/blob/client'
+import { tiposImagem, validarUpload } from './uploadsBlob.js'
 import { MongoClient, ObjectId } from 'mongodb'
 import { createHmac, randomBytes, scryptSync, timingSafeEqual } from 'node:crypto'
 
@@ -175,7 +177,7 @@ async function corrigirDadosAntigos(db) {
 async function prepararBanco(db) {
   await db.collection('stories').createIndex({ expira_em: 1 }, { expireAfterSeconds: 0 })
   await semearBanco(db)
-  await corrigirDadosAntigos(db)
+  // Não modificar imagens ou dados de contas existentes ao iniciar a API.
 }
 
 app.get('/api/health', async (_req, res) => { try { const db = await getDatabase(); await db.command({ ping: 1 }); res.json({ ok: true, banco: 'mongodb' }) } catch (error) { res.status(503).json({ ok: false, erro: error.message }) } })
@@ -216,6 +218,28 @@ app.post('/api/auth/login', async (req, res, next) => {
 
 app.get('/api/perfil', exigirUsuario, async (req, res, next) => { try { res.json({ ...perfilPublico(req.usuario), email: req.usuario.email || '' }) } catch (error) { next(error) } })
 
+app.post('/api/uploads', async (req, res, next) => {
+  try {
+    if (!process.env.BLOB_READ_WRITE_TOKEN) return res.status(503).json({ erro: 'Conecte o Vercel Blob ao projeto para habilitar uploads' })
+    const resultado = await handleUpload({
+      request: req,
+      body: req.body,
+      token: process.env.BLOB_READ_WRITE_TOKEN,
+      onBeforeGenerateToken: async (pathname) => {
+        const usuario = await usuarioAtual(req)
+        if (!usuario) throw Object.assign(new Error('Faça login para enviar imagens'), { status: 401 })
+        const prefixo = `uploads/${usuario._id}/`
+        if (!pathname.startsWith(prefixo) || !/^[a-f0-9-]+\.(jpg|png|gif|webp)$/.test(pathname.slice(prefixo.length))) {
+          throw Object.assign(new Error('Caminho de upload inválido'), { status: 400 })
+        }
+        return { allowedContentTypes: tiposImagem, addRandomSuffix: true, allowOverwrite: false, validUntil: Date.now() + 15 * 60 * 1000 }
+      },
+      onUploadCompleted: async () => {},
+    })
+    res.json(resultado)
+  } catch (error) { next(error) }
+})
+
 app.get('/api/stories', exigirUsuario, async (req, res, next) => {
   try {
     const db = await getDatabase()
@@ -232,11 +256,7 @@ app.get('/api/stories', exigirUsuario, async (req, res, next) => {
 
 app.post('/api/stories', exigirUsuario, async (req, res, next) => {
   try {
-    const imagem = req.body.imagem
-    if (typeof imagem !== 'string' || !/^data:image\/(png|jpeg|gif|webp);base64,[A-Za-z0-9+/]+={0,2}$/.test(imagem)) {
-      return res.status(400).json({ erro: 'Escolha uma imagem PNG, JPEG, WebP ou GIF' })
-    }
-    if (imagem.length > 3_500_000) return res.status(413).json({ erro: 'Escolha um story de até 2,5 MB' })
+    const imagem = await validarUpload(req.body.imagem, String(req.usuario._id))
     const db = await getDatabase()
     await db.collection('stories').insertOne({
       usuarioId: String(req.usuario._id), imagem, vistos: [],
@@ -309,17 +329,8 @@ app.put('/api/perfil', exigirUsuario, async (req, res, next) => {
       return res.status(400).json({ erro: 'A bio pode ter no máximo 300 caracteres' })
     }
 
-    if (foto && !foto.startsWith('data:image/')) {
-      return res.status(400).json({ erro: 'Envie uma imagem válida para o perfil' })
-    }
-
-    if (capa && !capa.startsWith('data:image/')) {
-      return res.status(400).json({ erro: 'Envie uma imagem ou GIF válido para a capa' })
-    }
-
-    if (foto.length > 2_800_000 || capa.length > 2_800_000) {
-      return res.status(413).json({ erro: 'A foto e a capa devem ter no máximo 2 MB cada' })
-    }
+    if (foto && foto !== req.usuario.foto) await validarUpload(foto, String(req.usuario._id))
+    if (capa && capa !== req.usuario.capa) await validarUpload(capa, String(req.usuario._id))
 
     const db = await getDatabase()
     const usuarioComMesmoNome = await db.collection('users').findOne({
@@ -362,7 +373,7 @@ app.get('/api/posts', exigirUsuario, async (req, res, next) => {
 })
 
 app.post('/api/posts', async (req, res, next) => {
-  try { const usuario = await usuarioAtual(req); if (!usuario) return res.status(401).json({ erro: 'Faça login para publicar' }); const imagem = req.body.imagem?.trim(); const legenda = req.body.legenda?.trim(); if (!imagem || !legenda || legenda.toUpperCase() === 'NOT NULL') return res.status(400).json({ erro: 'Informe imagem e uma legenda válida' }); const db = await getDatabase(); const post = { imagem, legenda, criado_em: new Date(), autor: autorPublico(usuario) }; const { insertedId } = await db.collection('posts').insertOne(post); res.status(201).json(postPublico({ ...post, _id: insertedId })) } catch (error) { next(error) }
+  try { const usuario = await usuarioAtual(req); if (!usuario) return res.status(401).json({ erro: 'Faça login para publicar' }); const legenda = req.body.legenda?.trim(); if (!legenda || legenda.toUpperCase() === 'NOT NULL') return res.status(400).json({ erro: 'Informe uma legenda válida' }); const imagem = await validarUpload(req.body.imagem, String(usuario._id)); const db = await getDatabase(); const post = { imagem, legenda, criado_em: new Date(), autor: autorPublico(usuario) }; const { insertedId } = await db.collection('posts').insertOne(post); res.status(201).json(postPublico({ ...post, _id: insertedId })) } catch (error) { next(error) }
 })
 
 app.put('/api/posts/:id', async (req, res, next) => {
@@ -385,7 +396,7 @@ app.put('/api/posts/:id', async (req, res, next) => {
 })
 
 app.delete('/api/posts/:id', async (req, res, next) => { try { const usuario = await usuarioAtual(req); if (!usuario) return res.status(401).json({ erro: 'Faça login para excluir' }); const db = await getDatabase(); const resultado = await db.collection('posts').deleteOne({ _id: new ObjectId(req.params.id), 'autor.id': usuario._id.toString() }); if (!resultado.deletedCount) return res.status(403).json({ erro: 'Você só pode excluir seus próprios posts' }); res.json({ mensagem: 'Post apagado com sucesso' }) } catch (error) { next(error) } })
-app.use((error, _req, res, _next) => { console.error(error); res.status(500).json({ erro: 'Erro interno da API' }) })
+app.use((error, _req, res, _next) => { console.error(error); const status = [400, 401, 413].includes(error.status) ? error.status : 500; res.status(status).json({ erro: status === 500 ? 'Erro interno da API' : error.message }) })
 
 if (process.env.VERCEL !== '1') app.listen(PORT, () => console.log(`API executando em http://localhost:${PORT}`))
 export default app

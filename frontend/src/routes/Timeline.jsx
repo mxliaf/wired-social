@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import PostFeed from '../componentes/PostFeed'
+import { enviarImagem } from '../services/uploads'
 import { NovoStory, StoryAvatar } from '../componentes/Stories'
 import { API_URL } from '../config/api'
 import { editarLegenda, excluirPost, listarPosts } from '../services/posts'
@@ -112,11 +113,12 @@ export default function Timeline() {
             setPublicando(true)
             setErroPublicacao('')
 
+            const imagemUrl = await enviarImagem(imagemPublicacao)
             const resposta = await fetchComAuth(`${API_URL}/api/posts`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    imagem: imagemPublicacao,
+                    imagem: imagemUrl,
                     legenda: legendaPublicacao.trim(),
                 }),
             })

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { API_URL } from '../config/api'
+import { enviarImagem } from '../services/uploads'
 
 export default function Publicar() {
     const [imagem, setImagem] = useState(null)
@@ -23,21 +24,15 @@ export default function Publicar() {
             return
         }
 
-        const imagemComoTexto = await new Promise((resolve, reject) => {
-            const leitor = new FileReader()
-            leitor.onload = () => resolve(leitor.result)
-            leitor.onerror = reject
-            leitor.readAsDataURL(imagem)
-        })
-
         try {
             setEnviando(true)
             setErro('')
+            const imagemUrl = await enviarImagem(imagem)
 
             const resposta = await fetch(`${API_URL}/api/posts`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('wired_token') || ''}` },
-                body: JSON.stringify({ imagem: imagemComoTexto, legenda }),
+                body: JSON.stringify({ imagem: imagemUrl, legenda }),
             })
 
             const dados = await resposta.json()

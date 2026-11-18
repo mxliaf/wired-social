@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { API_URL } from '../config/api'
 import { fetchComAuth } from '../services/auth'
+import { enviarImagem } from '../services/uploads'
 
 function lerImagem(arquivo, descricao) {
     return new Promise((resolve, reject) => {
@@ -67,14 +68,6 @@ export default function Config() {
             return
         }
 
-        if (arquivo.size > 2_000_000) {
-            event.target.value = ''
-            setArquivo(null)
-            setPreview('')
-            setErro(`A ${descricao} deve ter no máximo 2 MB`)
-            return
-        }
-
         try {
             setArquivo(arquivo)
             setPreview(await lerImagem(arquivo, `a ${descricao}`))
@@ -90,18 +83,6 @@ export default function Config() {
             setErro('')
             setMensagem('')
 
-            if (foto && foto.size > 2_000_000) {
-                throw new Error('A foto deve ter no máximo 2 MB')
-            }
-
-            if (capa && capa.size > 2_000_000) {
-                throw new Error('A capa deve ter no máximo 2 MB')
-            }
-
-            if ((foto?.size || 0) + (capa?.size || 0) > 2_800_000) {
-                throw new Error('Para enviar foto e capa juntas, os arquivos devem somar no máximo 2,8 MB')
-            }
-
             const dados = {
                 nome,
                 nome_usuario: nomeUsuario,
@@ -109,11 +90,11 @@ export default function Config() {
             }
 
             if (foto) {
-                dados.foto = await lerImagem(foto, 'a foto')
+                dados.foto = await enviarImagem(foto)
             }
 
             if (capa) {
-                dados.capa = await lerImagem(capa, 'a capa')
+                dados.capa = await enviarImagem(capa)
             }
 
             const resposta = await fetchComAuth(`${API_URL}/api/perfil`, {
@@ -181,7 +162,7 @@ export default function Config() {
                         <span className="upload-perfil-overlay">{fotoPreview || fotoAtual ? 'Trocar foto' : 'Adicionar foto'}</span>
                     </label>
                 </div>
-                <p id="ajuda-imagens-perfil" className="form-text mb-4">Toque na foto ou na capa para escolher uma imagem ou GIF de até 2 MB. Capa ideal: 1200 × 400.</p>
+                <p id="ajuda-imagens-perfil" className="form-text mb-4">Toque na foto ou na capa para escolher JPEG, PNG, WebP ou GIF. Capa ideal: 1200 × 400.</p>
 
                 <form onSubmit={salvarPerfil}>
                     <div className="mb-3">
