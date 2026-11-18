@@ -1170,7 +1170,19 @@ body.menu-lateral-aberto {
     padding: 17px 20px;
 }
 
-.post-feed-header div {
+.post-feed-autor {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: #202420;
+}
+
+.post-feed-autor:hover,
+.post-feed-legenda-autor:hover {
+    color: rgb(43, 67, 60);
+}
+
+.post-feed-autor-texto {
     display: flex;
     flex-direction: column;
 }
@@ -1221,6 +1233,14 @@ body.menu-lateral-aberto {
 .post-feed-legenda {
     margin-bottom: 16px;
     line-height: 1.5;
+}
+
+.post-feed-legenda-autor {
+    color: #202420;
+}
+
+.perfil-publico-erro {
+    max-width: 600px;
 }
 
 .destaque:hover {

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import PostFeed from '../componentes/PostFeed'
 import { API_URL } from '../config/api'
 import { editarLegenda, excluirPost, listarPosts } from '../services/posts'
@@ -89,12 +90,6 @@ export default function Timeline() {
 
         if (!arquivo) return
 
-        if (arquivo.size > 2_500_000) {
-            setErroPublicacao('A imagem deve ter no máximo 2,5 MB')
-            event.target.value = ''
-            return
-        }
-
         const leitor = new FileReader()
         leitor.onload = () => {
             setImagemPublicacao(leitor.result)
@@ -153,7 +148,11 @@ export default function Timeline() {
                     </button>
 
                     {usuarios.map((usuario) => (
-                        <div className="story-item" key={usuario.id}>
+                        <Link
+                            className="story-item text-decoration-none"
+                            key={usuario.id}
+                            to={usuario.id === perfil.id ? '/home' : `/perfil/${usuario.id}`}
+                        >
                             <div className="story-borda">
                                 {usuario.foto ? (
                                     <img src={usuario.foto} alt={`Foto de ${usuario.nome}`} />
@@ -162,7 +161,7 @@ export default function Timeline() {
                                 )}
                             </div>
                             <small>{usuario.id === perfil.id ? 'Você' : `@${usuario.nome_usuario}`}</small>
-                        </div>
+                        </Link>
                     ))}
                 </div>
             </section>

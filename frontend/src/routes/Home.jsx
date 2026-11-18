@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import Feed from './Feed';
-import FotoPerfil from '../componentes/FotoPerfil';
+import CabecalhoPerfil from '../componentes/CabecalhoPerfil';
 import { API_URL } from '../config/api';
 import { fetchComAuth } from '../services/auth';
 
@@ -36,31 +36,7 @@ function Home() {
         <>
             <div id="fullscreen">
                 <div id="MainContainer">
-                    <div id="profileheader">
-                        <div id="profilecover">
-                            {perfil.capa ? (
-                                <img src={perfil.capa} alt="Capa do perfil" />
-                            ) : (
-                                <span>Sem capa</span>
-                            )}
-                        </div>
-
-                        <div id="profilecontent">
-                            <FotoPerfil img={perfil.foto}></FotoPerfil>
-                            <div id="textodeperfil">
-                                <div id="nome">
-                                    <p><strong>{perfil.nome}</strong></p>
-                                </div>
-                                <div id="username">
-                                    <p>@{perfil.nome_usuario}</p>
-                                </div>
-                                <div id="dadosnumericos">
-                                    <p><strong>{perfil.seguidores}</strong> seguidores <span>·</span> <strong>{perfil.seguindo}</strong> seguindo</p>
-                                </div>
-                                {perfil.bio && <div id="bio"><p>{perfil.bio}</p></div>}
-                            </div>
-                        </div>
-                    </div>
+                    <CabecalhoPerfil perfil={perfil} />
                 </div>
                 <Feed apenasDoUsuario />
             </div>

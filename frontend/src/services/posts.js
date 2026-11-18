@@ -11,8 +11,10 @@ async function lerResposta(resposta) {
     return dados
 }
 
-export async function listarPosts(apenasDoUsuario = false) {
-    const filtro = apenasDoUsuario ? '?me=true' : ''
+export async function listarPosts(apenasDoUsuario = false, usuarioId = '') {
+    const filtro = usuarioId
+        ? `?usuario=${encodeURIComponent(usuarioId)}`
+        : apenasDoUsuario ? '?me=true' : ''
     const resposta = await fetchComAuth(`${API_URL}/api/posts${filtro}`)
     return lerResposta(resposta)
 }

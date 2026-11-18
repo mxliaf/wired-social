@@ -3,7 +3,7 @@ import Posts from '../componentes/Posts'
 import AcoesPost from '../componentes/AcoesPost'
 import { editarLegenda, excluirPost, listarPosts } from '../services/posts'
 
-export default function Feed({ apenasDoUsuario = false }) {
+export default function Feed({ apenasDoUsuario = false, usuarioId = '' }) {
     const [posts, setPosts] = useState([])
     const [abaAtiva, setAbaAtiva] = useState('feed')
     const [postSelecionado, setPostSelecionado] = useState(null)
@@ -13,7 +13,7 @@ export default function Feed({ apenasDoUsuario = false }) {
     useEffect(() => {
         async function carregarPosts() {
             try {
-                const dados = await listarPosts(apenasDoUsuario)
+                const dados = await listarPosts(apenasDoUsuario, usuarioId)
                 setPosts(dados)
             } catch (error) {
                 setErro(error.message)
@@ -23,7 +23,7 @@ export default function Feed({ apenasDoUsuario = false }) {
         }
 
         carregarPosts()
-    }, [apenasDoUsuario])
+    }, [apenasDoUsuario, usuarioId])
 
     async function editar(id, legenda) {
         const postAtualizado = await editarLegenda(id, legenda)

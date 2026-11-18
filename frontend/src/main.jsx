@@ -11,6 +11,7 @@ import Publicar from './routes/Publicar.jsx'
 import App from './App.jsx'
 import Cadastro from './routes/Cadastro.jsx'
 import RotaProtegida from './routes/RotaProtegida.jsx'
+import PerfilPublico from './routes/PerfilPublico.jsx'
 
 //importar react router
 
@@ -44,6 +45,7 @@ const router = createBrowserRouter(
           children: [
             { path: '/home', element: <Home /> },
             { path: '/feed', element: <Timeline /> },
+            { path: '/perfil/:id', element: <PerfilPublico /> },
             { path: '/publicar', element: <Publicar /> },
             { path: '/config', element: <Config /> },
           ],

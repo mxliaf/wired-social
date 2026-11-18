@@ -25,7 +25,7 @@ const origensPermitidas = [...new Set([
 ])]
 
 app.use(cors({ origin: origensPermitidas }))
-app.use(express.json({ limit: '4mb' }))
+app.use(express.json({ limit: '20mb' }))
 
 app.get('/', (_req, res) => {
   res.json({ ok: true, servico: 'Wired API' })
@@ -225,6 +225,21 @@ app.get('/api/usuarios', exigirUsuario, async (_req, res, next) => {
   }
 })
 
+app.get('/api/usuarios/:id', exigirUsuario, async (req, res, next) => {
+  try {
+    if (!ObjectId.isValid(req.params.id)) {
+      return res.status(404).json({ erro: 'Perfil não encontrado' })
+    }
+
+    const db = await getDatabase()
+    const usuario = await db.collection('users').findOne({ _id: new ObjectId(req.params.id) })
+    if (!usuario) return res.status(404).json({ erro: 'Perfil não encontrado' })
+    res.json(perfilPublico(usuario))
+  } catch (error) {
+    next(error)
+  }
+})
+
 app.put('/api/perfil', exigirUsuario, async (req, res, next) => {
   try {
     const nome = req.body.nome?.trim()
@@ -283,7 +298,9 @@ app.put('/api/perfil', exigirUsuario, async (req, res, next) => {
 app.get('/api/posts', exigirUsuario, async (req, res, next) => {
   try {
     const db = await getDatabase()
-    const filtro = req.query.me === 'true' ? { 'autor.id': req.usuario._id.toString() } : {}
+    const filtro = req.query.usuario
+      ? { 'autor.id': String(req.query.usuario) }
+      : req.query.me === 'true' ? { 'autor.id': req.usuario._id.toString() } : {}
     const posts = await db.collection('posts').find(filtro).sort({ criado_em: -1 }).limit(100).toArray()
     res.json(posts.map(postPublico))
   } catch (error) {
@@ -292,7 +309,7 @@ app.get('/api/posts', exigirUsuario, async (req, res, next) => {
 })
 
 app.post('/api/posts', async (req, res, next) => {
-  try { const usuario = await usuarioAtual(req); if (!usuario) return res.status(401).json({ erro: 'Faça login para publicar' }); const imagem = req.body.imagem?.trim(); const legenda = req.body.legenda?.trim(); if (!imagem || !legenda || legenda.toUpperCase() === 'NOT NULL') return res.status(400).json({ erro: 'Informe imagem e uma legenda válida' }); if (imagem.length > 4_000_000) return res.status(413).json({ erro: 'Imagem muito grande (máximo de 4 MB)' }); const db = await getDatabase(); const post = { imagem, legenda, criado_em: new Date(), autor: autorPublico(usuario) }; const { insertedId } = await db.collection('posts').insertOne(post); res.status(201).json(postPublico({ ...post, _id: insertedId })) } catch (error) { next(error) }
+  try { const usuario = await usuarioAtual(req); if (!usuario) return res.status(401).json({ erro: 'Faça login para publicar' }); const imagem = req.body.imagem?.trim(); const legenda = req.body.legenda?.trim(); if (!imagem || !legenda || legenda.toUpperCase() === 'NOT NULL') return res.status(400).json({ erro: 'Informe imagem e uma legenda válida' }); const db = await getDatabase(); const post = { imagem, legenda, criado_em: new Date(), autor: autorPublico(usuario) }; const { insertedId } = await db.collection('posts').insertOne(post); res.status(201).json(postPublico({ ...post, _id: insertedId })) } catch (error) { next(error) }
 })
 
 app.put('/api/posts/:id', async (req, res, next) => {

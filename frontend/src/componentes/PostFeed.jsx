@@ -1,24 +1,29 @@
 import AcoesPost from './AcoesPost'
+import { Link } from 'react-router-dom'
 
 export default function PostFeed({ post, perfil, onEditar, onExcluir }) {
     const fotoAutor = post.autor?.foto || perfil.foto
+    const autor = post.autor || perfil
+    const linkPerfil = autor.id === perfil.id ? '/home' : `/perfil/${autor.id}`
 
     return (
         <article className="post-feed-card">
             <header className="post-feed-header">
-                {fotoAutor ? (
-                    <img
-                        src={fotoAutor}
-                        alt="Foto do perfil"
-                        className="post-feed-avatar"
-                    />
-                ) : (
-                    <span className="post-feed-avatar post-feed-avatar-vazio" aria-label="Perfil sem foto">♡</span>
-                )}
-                <div>
-                    <strong>{post.autor?.nome_usuario || perfil.nome_usuario}</strong>
-                    <small>Agora mesmo</small>
-                </div>
+                <Link to={linkPerfil} className="post-feed-autor text-decoration-none">
+                    {fotoAutor ? (
+                        <img
+                            src={fotoAutor}
+                            alt={`Foto de ${autor.nome_usuario}`}
+                            className="post-feed-avatar"
+                        />
+                    ) : (
+                        <span className="post-feed-avatar post-feed-avatar-vazio" aria-label="Perfil sem foto">♡</span>
+                    )}
+                    <span className="post-feed-autor-texto">
+                        <strong>{autor.nome_usuario}</strong>
+                        <small>Agora mesmo</small>
+                    </span>
+                </Link>
             </header>
 
             <img
@@ -36,7 +41,7 @@ export default function PostFeed({ post, perfil, onEditar, onExcluir }) {
 
                 {post.legenda && (
                     <p className="post-feed-legenda">
-                        <strong>{post.autor?.nome_usuario || perfil.nome_usuario}</strong> {post.legenda}
+                        <Link to={linkPerfil} className="post-feed-legenda-autor"><strong>{autor.nome_usuario}</strong></Link> {post.legenda}
                     </p>
                 )}
 
