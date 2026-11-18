@@ -2,12 +2,25 @@ import { useEffect, useState } from 'react'
 import { API_URL } from '../config/api'
 import { fetchComAuth } from '../services/auth'
 
+function lerImagem(arquivo, descricao) {
+    return new Promise((resolve, reject) => {
+        const leitor = new FileReader()
+        leitor.onload = () => resolve(leitor.result)
+        leitor.onerror = () => reject(new Error(`Não foi possível ler ${descricao}`))
+        leitor.readAsDataURL(arquivo)
+    })
+}
+
 export default function Config() {
     const [nome, setNome] = useState('')
     const [nomeUsuario, setNomeUsuario] = useState('')
     const [bio, setBio] = useState('')
     const [foto, setFoto] = useState(null)
     const [fotoAtual, setFotoAtual] = useState('')
+    const [fotoPreview, setFotoPreview] = useState('')
+    const [capa, setCapa] = useState(null)
+    const [capaAtual, setCapaAtual] = useState('')
+    const [capaPreview, setCapaPreview] = useState('')
     const [mensagem, setMensagem] = useState('')
     const [erro, setErro] = useState('')
 
@@ -25,6 +38,7 @@ export default function Config() {
                 setNomeUsuario(perfil.nome_usuario || '')
                 setBio(perfil.bio || '')
                 setFotoAtual(perfil.foto || '')
+                setCapaAtual(perfil.capa || '')
             } catch (error) {
                 setErro(error.message)
             }
@@ -32,6 +46,40 @@ export default function Config() {
 
         carregarPerfil()
     }, [])
+
+    async function selecionarImagem(event, setArquivo, setPreview, descricao) {
+        const arquivo = event.target.files[0] || null
+        setErro('')
+
+        if (!arquivo) {
+            setArquivo(null)
+            setPreview('')
+            return
+        }
+
+        if (!arquivo.type.startsWith('image/')) {
+            event.target.value = ''
+            setArquivo(null)
+            setPreview('')
+            setErro(`Escolha uma imagem ou GIF válido para ${descricao}`)
+            return
+        }
+
+        if (arquivo.size > 2_000_000) {
+            event.target.value = ''
+            setArquivo(null)
+            setPreview('')
+            setErro(`A ${descricao} deve ter no máximo 2 MB`)
+            return
+        }
+
+        try {
+            setArquivo(arquivo)
+            setPreview(await lerImagem(arquivo, `a ${descricao}`))
+        } catch (error) {
+            setErro(error.message)
+        }
+    }
 
     async function salvarPerfil(event) {
         event.preventDefault()
@@ -44,6 +92,14 @@ export default function Config() {
                 throw new Error('A foto deve ter no máximo 2 MB')
             }
 
+            if (capa && capa.size > 2_000_000) {
+                throw new Error('A capa deve ter no máximo 2 MB')
+            }
+
+            if ((foto?.size || 0) + (capa?.size || 0) > 2_800_000) {
+                throw new Error('Para enviar foto e capa juntas, os arquivos devem somar no máximo 2,8 MB')
+            }
+
             const dados = {
                 nome,
                 nome_usuario: nomeUsuario,
@@ -51,12 +107,11 @@ export default function Config() {
             }
 
             if (foto) {
-                dados.foto = await new Promise((resolve, reject) => {
-                    const leitor = new FileReader()
-                    leitor.onload = () => resolve(leitor.result)
-                    leitor.onerror = () => reject(new Error('Não foi possível ler a foto'))
-                    leitor.readAsDataURL(foto)
-                })
+                dados.foto = await lerImagem(foto, 'a foto')
+            }
+
+            if (capa) {
+                dados.capa = await lerImagem(capa, 'a capa')
             }
 
             const resposta = await fetchComAuth(`${API_URL}/api/perfil`, {
@@ -75,7 +130,11 @@ export default function Config() {
             setNomeUsuario(perfilAtualizado.nome_usuario || '')
             setBio(perfilAtualizado.bio || '')
             setFotoAtual(perfilAtualizado.foto || '')
+            setCapaAtual(perfilAtualizado.capa || '')
             setFoto(null)
+            setCapa(null)
+            setFotoPreview('')
+            setCapaPreview('')
             localStorage.setItem('wired_usuario', JSON.stringify(perfilAtualizado))
             window.dispatchEvent(new Event('wired-user-updated'))
             setMensagem('Perfil atualizado com sucesso!')
@@ -89,19 +148,27 @@ export default function Config() {
             <div className="card card-formulario card-configuracoes mx-auto p-4">
                 <h1 className="h3 mb-4">Configurações do perfil</h1>
 
-                {fotoAtual ? (
-                    <img
-                        src={fotoAtual}
-                        alt="Foto atual do perfil"
-                        className="foto-configuracao rounded-circle object-fit-cover mx-auto mb-4"
-                        width="120"
-                        height="120"
-                    />
-                ) : (
-                    <div className="foto-configuracao foto-configuracao-vazia mx-auto mb-4" aria-label="Perfil sem foto">
-                        Sem foto
+                <div className="preview-perfil-config mb-4">
+                    <div className="preview-capa-config">
+                        {(capaPreview || capaAtual) ? (
+                            <img src={capaPreview || capaAtual} alt="Prévia da capa" />
+                        ) : (
+                            <span>Sem capa</span>
+                        )}
                     </div>
-                )}
+
+                    {(fotoPreview || fotoAtual) ? (
+                        <img
+                            src={fotoPreview || fotoAtual}
+                            alt="Prévia da foto de perfil"
+                            className="foto-configuracao preview-foto-config"
+                        />
+                    ) : (
+                        <div className="foto-configuracao foto-configuracao-vazia preview-foto-config" aria-label="Perfil sem foto">
+                            Sem foto
+                        </div>
+                    )}
+                </div>
 
                 <form onSubmit={salvarPerfil}>
                     <div className="mb-3">
@@ -160,9 +227,24 @@ export default function Config() {
                             type="file"
                             accept="image/*"
                             className="form-control campo-padrao"
-                            onChange={(event) => setFoto(event.target.files[0])}
+                            onChange={(event) => selecionarImagem(event, setFoto, setFotoPreview, 'foto')}
                         />
-                        <div className="form-text">Imagem opcional de até 2 MB.</div>
+                        <div className="form-text">Imagem ou GIF opcional de até 2 MB.</div>
+                    </div>
+
+                    <div className="mb-3">
+                        <label htmlFor="capa" className="form-label">
+                            Nova foto de capa
+                        </label>
+
+                        <input
+                            id="capa"
+                            type="file"
+                            accept="image/*,.gif"
+                            className="form-control campo-padrao"
+                            onChange={(event) => selecionarImagem(event, setCapa, setCapaPreview, 'capa')}
+                        />
+                        <div className="form-text">Imagem ou GIF horizontal de até 2 MB. Recomendado: 1200 × 400.</div>
                     </div>
 
                     {mensagem && <p className="text-success">{mensagem}</p>}

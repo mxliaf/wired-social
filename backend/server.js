@@ -108,9 +108,16 @@ function perfilPublico(usuario) {
     nome_usuario: usuario.nome_usuario || '',
     bio: usuario.bio || '',
     foto,
+    capa: typeof usuario.capa === 'string' ? usuario.capa : '',
     seguidores: Number(usuario.seguidores) || 0,
     seguindo: Number(usuario.seguindo) || 0,
   }
+}
+
+function autorPublico(usuario) {
+  const autor = perfilPublico(usuario)
+  delete autor.capa
+  return autor
 }
 
 function postPublico(post) {
@@ -124,7 +131,7 @@ function postPublico(post) {
     imagem: post.imagem,
     legenda,
     criado_em: post.criado_em,
-    autor: post.autor ? perfilPublico(post.autor) : null,
+    autor: post.autor ? autorPublico(post.autor) : null,
   }
 }
 
@@ -143,12 +150,13 @@ async function semearBanco(db) {
     senha: senhaHash('123456'),
     bio: 'Usuário de demonstração da Wired',
     foto: '',
+    capa: '',
     seguidores: 0,
     seguindo: 0,
     criado_em: new Date(),
   }))
   const resultado = await db.collection('users').insertMany(usuarios)
-  await db.collection('posts').insertMany(exemplos.map(([, imagem, legenda], index) => ({ imagem, legenda, criado_em: new Date(Date.now() - index * 3600000), autor: perfilPublico({ ...usuarios[index], _id: resultado.insertedIds[index] }) })))
+  await db.collection('posts').insertMany(exemplos.map(([, imagem, legenda], index) => ({ imagem, legenda, criado_em: new Date(Date.now() - index * 3600000), autor: autorPublico({ ...usuarios[index], _id: resultado.insertedIds[index] }) })))
 }
 
 async function corrigirDadosAntigos(db) {
@@ -191,6 +199,7 @@ app.post('/api/auth/register', async (req, res, next) => {
       senha: senhaHash(senha),
       bio: '',
       foto: '',
+      capa: '',
       seguidores: 0,
       seguindo: 0,
       criado_em: new Date(),
@@ -222,6 +231,7 @@ app.put('/api/perfil', exigirUsuario, async (req, res, next) => {
     const nome_usuario = req.body.nome_usuario?.trim().toLowerCase()
     const bio = typeof req.body.bio === 'string' ? req.body.bio.trim() : ''
     const foto = typeof req.body.foto === 'string' ? req.body.foto.trim() : req.usuario.foto || ''
+    const capa = typeof req.body.capa === 'string' ? req.body.capa.trim() : req.usuario.capa || ''
 
     if (!nome || !nome_usuario) {
       return res.status(400).json({ erro: 'Informe o nome e o nome de usuário' })
@@ -235,6 +245,14 @@ app.put('/api/perfil', exigirUsuario, async (req, res, next) => {
       return res.status(400).json({ erro: 'Envie uma imagem válida para o perfil' })
     }
 
+    if (capa && !capa.startsWith('data:image/')) {
+      return res.status(400).json({ erro: 'Envie uma imagem ou GIF válido para a capa' })
+    }
+
+    if (foto.length > 2_800_000 || capa.length > 2_800_000) {
+      return res.status(413).json({ erro: 'A foto e a capa devem ter no máximo 2 MB cada' })
+    }
+
     const db = await getDatabase()
     const usuarioComMesmoNome = await db.collection('users').findOne({
       nome_usuario,
@@ -245,7 +263,7 @@ app.put('/api/perfil', exigirUsuario, async (req, res, next) => {
       return res.status(409).json({ erro: 'Esse nome de usuário já está em uso' })
     }
 
-    const atualizacao = { nome, nome_usuario, bio, foto }
+    const atualizacao = { nome, nome_usuario, bio, foto, capa }
     await db.collection('users').updateOne({ _id: req.usuario._id }, { $set: atualizacao })
 
     const usuarioAtualizado = { ...req.usuario, ...atualizacao }
@@ -253,7 +271,7 @@ app.put('/api/perfil', exigirUsuario, async (req, res, next) => {
 
     await db.collection('posts').updateMany(
       { 'autor.id': req.usuario._id.toString() },
-      { $set: { autor: perfil } },
+      { $set: { autor: autorPublico(usuarioAtualizado) } },
     )
 
     res.json(perfil)
@@ -274,7 +292,7 @@ app.get('/api/posts', exigirUsuario, async (req, res, next) => {
 })
 
 app.post('/api/posts', async (req, res, next) => {
-  try { const usuario = await usuarioAtual(req); if (!usuario) return res.status(401).json({ erro: 'Faça login para publicar' }); const imagem = req.body.imagem?.trim(); const legenda = req.body.legenda?.trim(); if (!imagem || !legenda || legenda.toUpperCase() === 'NOT NULL') return res.status(400).json({ erro: 'Informe imagem e uma legenda válida' }); if (imagem.length > 4_000_000) return res.status(413).json({ erro: 'Imagem muito grande (máximo de 4 MB)' }); const db = await getDatabase(); const post = { imagem, legenda, criado_em: new Date(), autor: perfilPublico(usuario) }; const { insertedId } = await db.collection('posts').insertOne(post); res.status(201).json(postPublico({ ...post, _id: insertedId })) } catch (error) { next(error) }
+  try { const usuario = await usuarioAtual(req); if (!usuario) return res.status(401).json({ erro: 'Faça login para publicar' }); const imagem = req.body.imagem?.trim(); const legenda = req.body.legenda?.trim(); if (!imagem || !legenda || legenda.toUpperCase() === 'NOT NULL') return res.status(400).json({ erro: 'Informe imagem e uma legenda válida' }); if (imagem.length > 4_000_000) return res.status(413).json({ erro: 'Imagem muito grande (máximo de 4 MB)' }); const db = await getDatabase(); const post = { imagem, legenda, criado_em: new Date(), autor: autorPublico(usuario) }; const { insertedId } = await db.collection('posts').insertOne(post); res.status(201).json(postPublico({ ...post, _id: insertedId })) } catch (error) { next(error) }
 })
 
 app.put('/api/posts/:id', async (req, res, next) => {

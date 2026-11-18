@@ -331,10 +331,21 @@ body.menu-lateral-aberto {
 }
 
 #profilecover {
+    display: flex;
     height: 150px;
-    background-image: url(https://i.pinimg.com/originals/35/d5/54/35d554f31bd87bf3f5097830af38332b.gif);
-    background-position: center;
-    background-size: cover;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    color: #667069;
+    background: linear-gradient(135deg, rgba(161, 195, 184, 0.5), rgba(216, 232, 168, 0.42));
+    font-size: 14px;
+}
+
+#profilecover img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
 }
 
 #profilecontent {
@@ -582,6 +593,44 @@ body.menu-lateral-aberto {
     border-radius: 50%;
     color: #667069;
     font-size: 14px;
+}
+
+.preview-perfil-config {
+    position: relative;
+    min-height: 230px;
+    padding-bottom: 42px;
+}
+
+.preview-capa-config {
+    display: flex;
+    width: 100%;
+    aspect-ratio: 3 / 1;
+    min-height: 150px;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    border: 1px solid #e4e7ef;
+    border-radius: 22px;
+    color: #667069;
+    background: linear-gradient(135deg, rgba(161, 195, 184, 0.5), rgba(216, 232, 168, 0.42));
+    font-size: 14px;
+}
+
+.preview-capa-config img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+}
+
+.preview-foto-config {
+    position: absolute;
+    bottom: 0;
+    left: 28px;
+    width: 130px;
+    height: 130px;
+    border-radius: 50%;
+    object-fit: cover;
 }
 
 .campo-padrao {
@@ -1428,5 +1477,21 @@ body.menu-lateral-aberto {
     .feed-composer-acoes {
         display: grid;
         grid-template-columns: 1fr 1fr;
+    }
+
+    .preview-perfil-config {
+        min-height: 190px;
+        padding-bottom: 36px;
+    }
+
+    .preview-capa-config {
+        min-height: 120px;
+        border-radius: 17px;
+    }
+
+    .preview-foto-config {
+        left: 18px;
+        width: 108px;
+        height: 108px;
     }
 }

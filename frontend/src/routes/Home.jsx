@@ -10,6 +10,7 @@ function Home() {
         nome_usuario: '',
         bio: '',
         foto: '',
+        capa: '',
         seguidores: 0,
         seguindo: 0,
     })
@@ -36,7 +37,13 @@ function Home() {
             <div id="fullscreen">
                 <div id="MainContainer">
                     <div id="profileheader">
-                        <div id="profilecover"></div>
+                        <div id="profilecover">
+                            {perfil.capa ? (
+                                <img src={perfil.capa} alt="Capa do perfil" />
+                            ) : (
+                                <span>Sem capa</span>
+                            )}
+                        </div>
 
                         <div id="profilecontent">
                             <FotoPerfil img={perfil.foto}></FotoPerfil>
