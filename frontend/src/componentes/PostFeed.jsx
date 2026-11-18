@@ -2,7 +2,7 @@ import AcoesPost from './AcoesPost'
 import { Link } from 'react-router-dom'
 
 export default function PostFeed({ post, perfil, onEditar, onExcluir }) {
-    const fotoAutor = post.autor?.foto || perfil.foto
+    const fotoAutor = post.autor?.foto || ''
     const autor = post.autor || perfil
     const linkPerfil = autor.id === perfil.id ? '/home' : `/perfil/${autor.id}`
 
