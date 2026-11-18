@@ -13,6 +13,10 @@ const TOKEN_SECRET = process.env.TOKEN_SECRET || 'troque-este-segredo-em-produca
 app.use(cors({ origin: FRONTEND_URL.split(',').map((url) => url.trim()) }))
 app.use(express.json({ limit: '4mb' }))
 
+app.get('/', (_req, res) => {
+  res.json({ ok: true, servico: 'Wired API' })
+})
+
 const mongoState = globalThis.__wiredMongoState || (globalThis.__wiredMongoState = {
   client: null,
   databasePromise: null,
