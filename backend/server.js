@@ -10,7 +10,21 @@ const MONGODB_URI = process.env.MONGODB_URI
 const MONGODB_DB = process.env.MONGODB_DB || 'wired'
 const TOKEN_SECRET = process.env.TOKEN_SECRET || 'troque-este-segredo-em-producao'
 
-app.use(cors({ origin: FRONTEND_URL.split(',').map((url) => url.trim()) }))
+function normalizarOrigem(url) {
+  try {
+    return new URL(url).origin
+  } catch {
+    return url.replace(/\/+$/, '')
+  }
+}
+
+const origensPermitidas = [...new Set([
+  'http://localhost:5173',
+  'https://mxliaf.github.io',
+  ...FRONTEND_URL.split(',').map((url) => url.trim()).filter(Boolean).map(normalizarOrigem),
+])]
+
+app.use(cors({ origin: origensPermitidas }))
 app.use(express.json({ limit: '4mb' }))
 
 app.get('/', (_req, res) => {
