@@ -13,14 +13,27 @@ const TOKEN_SECRET = process.env.TOKEN_SECRET || 'troque-este-segredo-em-produca
 app.use(cors({ origin: FRONTEND_URL.split(',').map((url) => url.trim()) }))
 app.use(express.json({ limit: '4mb' }))
 
-let databasePromise
+const mongoState = globalThis.__wiredMongoState || (globalThis.__wiredMongoState = {
+  client: null,
+  databasePromise: null,
+})
+
 function getDatabase() {
   if (!MONGODB_URI) throw new Error('MONGODB_URI não configurada')
-  if (!databasePromise) {
-    const client = new MongoClient(MONGODB_URI)
-    databasePromise = client.connect().then(() => client.db(MONGODB_DB))
+  if (!mongoState.databasePromise) {
+    mongoState.client = new MongoClient(MONGODB_URI, {
+      maxPoolSize: 5,
+      serverSelectionTimeoutMS: 10000,
+    })
+    mongoState.databasePromise = mongoState.client.connect()
+      .then(() => mongoState.client.db(MONGODB_DB))
+      .catch((error) => {
+        mongoState.databasePromise = null
+        mongoState.client = null
+        throw error
+      })
   }
-  return databasePromise
+  return mongoState.databasePromise
 }
 
 function senhaHash(senha, salt = randomBytes(16).toString('hex')) {

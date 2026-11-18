@@ -298,6 +298,14 @@ a {
     margin: 0 auto;
 }
 
+.cadastro-card {
+    width: 480px;
+}
+
+.cadastro-erro {
+    overflow-wrap: anywhere;
+}
+
 .titulo-login {
     margin: 0;
     color: rgb(43, 67, 60);
@@ -784,6 +792,10 @@ a {
 }
 
 @media (max-width: 576px) {
+    body {
+        overflow-x: hidden;
+    }
+
     #header {
         height: 70px;
         padding: 0 14px;
@@ -791,6 +803,16 @@ a {
 
     .conteudo-rotas {
         padding-top: 70px;
+    }
+
+    .cadastro-pagina {
+        padding: 24px 12px !important;
+    }
+
+    .cadastro-card {
+        width: 100%;
+        padding: 22px !important;
+        border-radius: 22px;
     }
 
     #textologo {
