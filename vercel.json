@@ -18,6 +18,13 @@
       }
     },
     {
+      "source": "/(home|login|cadastro|feed|publicar|config)",
+      "destination": {
+        "service": "frontend",
+        "path": "/index.html"
+      }
+    },
+    {
       "source": "/(.*)",
       "destination": {
         "service": "frontend"

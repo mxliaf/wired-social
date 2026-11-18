@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { API_URL } from '../config/api'
 
 export default function Login() {
@@ -77,7 +77,7 @@ export default function Login() {
                                         </button>
 
                                         <div className="credenciais-login mt-4">
-                                            <small>Não tem conta? <a href="/cadastro">Cadastre-se</a></small>
+                                            <small>Não tem conta? <Link to="/cadastro">Cadastre-se</Link></small>
                                         </div>
                                     </form>
 
