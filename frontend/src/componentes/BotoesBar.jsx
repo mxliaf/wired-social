@@ -2,53 +2,46 @@ import { Link } from 'react-router-dom'
 import { useNavigate } from 'react-router-dom'
 import { estaAutenticado, sair } from '../services/auth'
 
-function BotoesBar() {
+function BotoesBar({ onNavigate }) {
     const navigate = useNavigate()
 
     function sairDaConta() {
         sair()
+        onNavigate?.()
         navigate('/login')
     }
 
     if (!estaAutenticado()) return null
 
     return (
-        <div id="botoesconta">
-            <Link
-                to="/home"
-                className="botoesnav text-decoration-none"
-            >
-                Perfil
-            </Link>
-            <Link
-                to="/feed"
-                className="botoesnav text-decoration-none"
-            >
-                Feed
-            </Link>
+        <ul id="botoesconta" className="navbar-nav ms-auto">
+            {[
+                ['/home', 'Perfil'],
+                ['/feed', 'Feed'],
+                ['/publicar', 'Publicar'],
+                ['/config', 'Configurações'],
+            ].map(([rota, texto]) => (
+                <li className="nav-item" key={rota}>
+                    <Link
+                        to={rota}
+                        className="botoesnav nav-link text-decoration-none"
+                        onClick={onNavigate}
+                    >
+                        {texto}
+                    </Link>
+                </li>
+            ))}
 
-            <Link
-                to="/publicar"
-                className="botoesnav text-decoration-none"
-            >
-                Publicar Post
-            </Link>
-
-            <Link
-                to="/config"
-                className="botoesnav text-decoration-none"
-            >
-                Configurações
-            </Link>
-
-            <button
-                type="button"
-                className="botoesnav border-0 bg-transparent"
-                onClick={sairDaConta}
-            >
-                Sair
-            </button>
-        </div>
+            <li className="nav-item">
+                <button
+                    type="button"
+                    className="botoesnav nav-link"
+                    onClick={sairDaConta}
+                >
+                    Sair
+                </button>
+            </li>
+        </ul>
     )
 }
 

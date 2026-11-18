@@ -11,8 +11,9 @@ async function lerResposta(resposta) {
     return dados
 }
 
-export async function listarPosts() {
-    const resposta = await fetchComAuth(`${API_URL}/api/posts`)
+export async function listarPosts(apenasDoUsuario = false) {
+    const filtro = apenasDoUsuario ? '?me=true' : ''
+    const resposta = await fetchComAuth(`${API_URL}/api/posts${filtro}`)
     return lerResposta(resposta)
 }
 

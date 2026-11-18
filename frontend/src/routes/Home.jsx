@@ -1,17 +1,17 @@
 import { useEffect, useState } from 'react';
-import Destaques from '../componentes/Destaques'
-import BarraAcoes from '../componentes/BarraAcoes';
 import Feed from './Feed';
 import FotoPerfil from '../componentes/FotoPerfil';
-import IconeLink from '../componentes/IconeLink';
 import { API_URL } from '../config/api';
 import { fetchComAuth } from '../services/auth';
 
 function Home() {
     const [perfil, setPerfil] = useState({
-        nome_usuario: 'agaetisbyrju',
-        bio: '2005 / fashion and technology enthusiast',
-        foto: 'https://i.pinimg.com/1200x/6c/ef/fb/6ceffb9310699f63aa4cfe58b67bf2dc.jpg',
+        nome: '',
+        nome_usuario: '',
+        bio: '',
+        foto: '',
+        seguidores: 0,
+        seguindo: 0,
     })
 
     useEffect(() => {
@@ -42,28 +42,20 @@ function Home() {
                             <FotoPerfil img={perfil.foto}></FotoPerfil>
                             <div id="textodeperfil">
                                 <div id="nome">
-                                    <p><strong>marilia</strong></p>
+                                    <p><strong>{perfil.nome}</strong></p>
                                 </div>
                                 <div id="username">
-                                    <p>{perfil.nome_usuario} <span>·</span> she/her</p>
+                                    <p>@{perfil.nome_usuario}</p>
                                 </div>
                                 <div id="dadosnumericos">
-                                    <p><strong>64,7 mil</strong> seguidores  <span>·</span><strong> 3.009</strong> seguindo</p>
+                                    <p><strong>{perfil.seguidores}</strong> seguidores <span>·</span> <strong>{perfil.seguindo}</strong> seguindo</p>
                                 </div>
-                                <div id="bio">
-                                    <p>{perfil.bio}</p>
-                                </div>
-                                <div id="linkbio">
-                                    <IconeLink></IconeLink>
-                                    <a href="https://www.last.fm/user/morphinedrip" target="_blank" rel="noreferrer">last.fm/user/morphinedrip</a>
-                                </div>
+                                {perfil.bio && <div id="bio"><p>{perfil.bio}</p></div>}
                             </div>
                         </div>
-                        <BarraAcoes></BarraAcoes>
                     </div>
                 </div>
-                <Destaques></Destaques>
-                <Feed></Feed>
+                <Feed apenasDoUsuario />
             </div>
 
             

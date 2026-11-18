@@ -6,8 +6,9 @@ import { editarLegenda, excluirPost, listarPosts } from '../services/posts'
 import { fetchComAuth } from '../services/auth'
 
 const perfilInicial = {
-    nome_usuario: 'agaetisbyrju',
-    foto: 'https://i.pinimg.com/1200x/6c/ef/fb/6ceffb9310699f63aa4cfe58b67bf2dc.jpg',
+    nome: '',
+    nome_usuario: '',
+    foto: '',
 }
 
 export default function Timeline() {

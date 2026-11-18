@@ -80,11 +80,34 @@ async function exigirUsuario(req, res, next) {
 }
 
 function perfilPublico(usuario) {
-  return { id: usuario._id.toString(), nome_usuario: usuario.nome_usuario, bio: usuario.bio || '', foto: usuario.foto || 'https://i.pravatar.cc/150?img=12' }
+  const foto = typeof usuario.foto === 'string' && !usuario.foto.includes('i.pravatar.cc')
+    ? usuario.foto
+    : ''
+
+  return {
+    id: String(usuario._id || usuario.id || ''),
+    nome: usuario.nome || usuario.nome_usuario || '',
+    nome_usuario: usuario.nome_usuario || '',
+    bio: usuario.bio || '',
+    foto,
+    seguidores: Number(usuario.seguidores) || 0,
+    seguindo: Number(usuario.seguindo) || 0,
+  }
 }
 
 function postPublico(post) {
-  return { id: post._id.toString(), imagem: post.imagem, legenda: post.legenda, criado_em: post.criado_em, autor: post.autor }
+  const legendaOriginal = post.legenda ?? post.descricao ?? ''
+  const legenda = typeof legendaOriginal === 'string' && legendaOriginal.trim().toUpperCase() !== 'NOT NULL'
+    ? legendaOriginal.trim()
+    : ''
+
+  return {
+    id: post._id.toString(),
+    imagem: post.imagem,
+    legenda,
+    criado_em: post.criado_em,
+    autor: post.autor ? perfilPublico(post.autor) : null,
+  }
 }
 
 const exemplos = [
@@ -95,20 +118,66 @@ const exemplos = [
 
 async function semearBanco(db) {
   if (await db.collection('users').countDocuments() > 0) return
-  const usuarios = exemplos.map(([nome_usuario]) => ({ nome_usuario, email: `${nome_usuario.replace('.', '')}@example.com`, senha: senhaHash('123456'), bio: 'Usuário de demonstração da Wired', foto: `https://i.pravatar.cc/150?u=${nome_usuario}`, criado_em: new Date() }))
+  const usuarios = exemplos.map(([nome_usuario]) => ({
+    nome: nome_usuario,
+    nome_usuario,
+    email: `${nome_usuario.replace('.', '')}@example.com`,
+    senha: senhaHash('123456'),
+    bio: 'Usuário de demonstração da Wired',
+    foto: '',
+    seguidores: 0,
+    seguindo: 0,
+    criado_em: new Date(),
+  }))
   const resultado = await db.collection('users').insertMany(usuarios)
   await db.collection('posts').insertMany(exemplos.map(([, imagem, legenda], index) => ({ imagem, legenda, criado_em: new Date(Date.now() - index * 3600000), autor: perfilPublico({ ...usuarios[index], _id: resultado.insertedIds[index] }) })))
+}
+
+async function corrigirDadosAntigos(db) {
+  await Promise.all([
+    db.collection('users').updateMany(
+      { foto: /^https:\/\/i\.pravatar\.cc\//i },
+      { $set: { foto: '' } },
+    ),
+    db.collection('posts').updateMany(
+      { legenda: /^\s*NOT NULL\s*$/i },
+      { $set: { legenda: '' } },
+    ),
+  ])
+}
+
+async function prepararBanco(db) {
+  await semearBanco(db)
+  await corrigirDadosAntigos(db)
 }
 
 app.get('/api/health', async (_req, res) => { try { const db = await getDatabase(); await db.command({ ping: 1 }); res.json({ ok: true, banco: 'mongodb' }) } catch (error) { res.status(503).json({ ok: false, erro: error.message }) } })
 
 app.post('/api/auth/register', async (req, res, next) => {
   try {
-    const nome_usuario = req.body.nome_usuario?.trim().toLowerCase(); const email = req.body.email?.trim().toLowerCase(); const senha = req.body.senha || ''
-    if (!nome_usuario || !email || senha.length < 6) return res.status(400).json({ erro: 'Informe usuário, e-mail e senha com pelo menos 6 caracteres' })
+    const nome = req.body.nome?.trim()
+    const nome_usuario = req.body.nome_usuario?.trim().toLowerCase()
+    const email = req.body.email?.trim().toLowerCase()
+    const senha = req.body.senha || ''
+
+    if (!nome || !nome_usuario || !email || senha.length < 6) {
+      return res.status(400).json({ erro: 'Informe nome, usuário, e-mail e senha com pelo menos 6 caracteres' })
+    }
+
     const db = await getDatabase(); const existente = await db.collection('users').findOne({ $or: [{ email }, { nome_usuario }] })
     if (existente) return res.status(409).json({ erro: 'E-mail ou nome de usuário já cadastrado' })
-    const usuario = { nome_usuario, email, senha: senhaHash(senha), bio: '', foto: `https://i.pravatar.cc/150?u=${email}`, criado_em: new Date() }; const { insertedId } = await db.collection('users').insertOne(usuario)
+    const usuario = {
+      nome,
+      nome_usuario,
+      email,
+      senha: senhaHash(senha),
+      bio: '',
+      foto: '',
+      seguidores: 0,
+      seguindo: 0,
+      criado_em: new Date(),
+    }
+    const { insertedId } = await db.collection('users').insertOne(usuario)
     res.status(201).json({ token: criarToken(insertedId.toString()), usuario: perfilPublico({ ...usuario, _id: insertedId }) })
   } catch (error) { next(error) }
 })
@@ -118,14 +187,85 @@ app.post('/api/auth/login', async (req, res, next) => {
 })
 
 app.get('/api/perfil', exigirUsuario, async (req, res, next) => { try { res.json(perfilPublico(req.usuario)) } catch (error) { next(error) } })
-app.get('/api/posts', exigirUsuario, async (_req, res, next) => { try { const db = await getDatabase(); const posts = await db.collection('posts').find().sort({ criado_em: -1 }).limit(100).toArray(); res.json(posts.map(postPublico)) } catch (error) { next(error) } })
+
+app.put('/api/perfil', exigirUsuario, async (req, res, next) => {
+  try {
+    const nome = req.body.nome?.trim()
+    const nome_usuario = req.body.nome_usuario?.trim().toLowerCase()
+    const bio = typeof req.body.bio === 'string' ? req.body.bio.trim() : ''
+    const foto = typeof req.body.foto === 'string' ? req.body.foto.trim() : req.usuario.foto || ''
+
+    if (!nome || !nome_usuario) {
+      return res.status(400).json({ erro: 'Informe o nome e o nome de usuário' })
+    }
+
+    if (bio.length > 300) {
+      return res.status(400).json({ erro: 'A bio pode ter no máximo 300 caracteres' })
+    }
+
+    if (foto && !foto.startsWith('data:image/')) {
+      return res.status(400).json({ erro: 'Envie uma imagem válida para o perfil' })
+    }
+
+    const db = await getDatabase()
+    const usuarioComMesmoNome = await db.collection('users').findOne({
+      nome_usuario,
+      _id: { $ne: req.usuario._id },
+    })
+
+    if (usuarioComMesmoNome) {
+      return res.status(409).json({ erro: 'Esse nome de usuário já está em uso' })
+    }
+
+    const atualizacao = { nome, nome_usuario, bio, foto }
+    await db.collection('users').updateOne({ _id: req.usuario._id }, { $set: atualizacao })
+
+    const usuarioAtualizado = { ...req.usuario, ...atualizacao }
+    const perfil = perfilPublico(usuarioAtualizado)
+
+    await db.collection('posts').updateMany(
+      { 'autor.id': req.usuario._id.toString() },
+      { $set: { autor: perfil } },
+    )
+
+    res.json(perfil)
+  } catch (error) {
+    next(error)
+  }
+})
+
+app.get('/api/posts', exigirUsuario, async (req, res, next) => {
+  try {
+    const db = await getDatabase()
+    const filtro = req.query.me === 'true' ? { 'autor.id': req.usuario._id.toString() } : {}
+    const posts = await db.collection('posts').find(filtro).sort({ criado_em: -1 }).limit(100).toArray()
+    res.json(posts.map(postPublico))
+  } catch (error) {
+    next(error)
+  }
+})
 
 app.post('/api/posts', async (req, res, next) => {
-  try { const usuario = await usuarioAtual(req); if (!usuario) return res.status(401).json({ erro: 'Faça login para publicar' }); const imagem = req.body.imagem?.trim(); const legenda = req.body.legenda?.trim(); if (!imagem || !legenda) return res.status(400).json({ erro: 'Informe imagem e legenda' }); if (imagem.length > 4_000_000) return res.status(413).json({ erro: 'Imagem muito grande (máximo de 4 MB)' }); const db = await getDatabase(); const post = { imagem, legenda, criado_em: new Date(), autor: perfilPublico(usuario) }; const { insertedId } = await db.collection('posts').insertOne(post); res.status(201).json(postPublico({ ...post, _id: insertedId })) } catch (error) { next(error) }
+  try { const usuario = await usuarioAtual(req); if (!usuario) return res.status(401).json({ erro: 'Faça login para publicar' }); const imagem = req.body.imagem?.trim(); const legenda = req.body.legenda?.trim(); if (!imagem || !legenda || legenda.toUpperCase() === 'NOT NULL') return res.status(400).json({ erro: 'Informe imagem e uma legenda válida' }); if (imagem.length > 4_000_000) return res.status(413).json({ erro: 'Imagem muito grande (máximo de 4 MB)' }); const db = await getDatabase(); const post = { imagem, legenda, criado_em: new Date(), autor: perfilPublico(usuario) }; const { insertedId } = await db.collection('posts').insertOne(post); res.status(201).json(postPublico({ ...post, _id: insertedId })) } catch (error) { next(error) }
 })
 
 app.put('/api/posts/:id', async (req, res, next) => {
-  try { const usuario = await usuarioAtual(req); if (!usuario) return res.status(401).json({ erro: 'Faça login para editar' }); const db = await getDatabase(); const post = await db.collection('posts').findOne({ _id: new ObjectId(req.params.id) }); if (!post || post.autor.id !== usuario._id.toString()) return res.status(403).json({ erro: 'Você só pode editar seus próprios posts' }); const atualizacao = {}; if (typeof req.body.legenda === 'string') atualizacao.legenda = req.body.legenda.trim(); if (typeof req.body.imagem === 'string') atualizacao.imagem = req.body.imagem.trim(); await db.collection('posts').updateOne({ _id: post._id }, { $set: atualizacao }); res.json(postPublico({ ...post, ...atualizacao })) } catch (error) { next(error) }
+  try {
+    const usuario = await usuarioAtual(req)
+    if (!usuario) return res.status(401).json({ erro: 'Faça login para editar' })
+
+    const legenda = typeof req.body.legenda === 'string' ? req.body.legenda.trim() : ''
+    if (!legenda || legenda.toUpperCase() === 'NOT NULL') {
+      return res.status(400).json({ erro: 'Informe uma legenda válida' })
+    }
+
+    const db = await getDatabase()
+    const post = await db.collection('posts').findOne({ _id: new ObjectId(req.params.id) })
+    if (!post || post.autor.id !== usuario._id.toString()) return res.status(403).json({ erro: 'Você só pode editar seus próprios posts' })
+
+    await db.collection('posts').updateOne({ _id: post._id }, { $set: { legenda } })
+    res.json(postPublico({ ...post, legenda }))
+  } catch (error) { next(error) }
 })
 
 app.delete('/api/posts/:id', async (req, res, next) => { try { const usuario = await usuarioAtual(req); if (!usuario) return res.status(401).json({ erro: 'Faça login para excluir' }); const db = await getDatabase(); const resultado = await db.collection('posts').deleteOne({ _id: new ObjectId(req.params.id), 'autor.id': usuario._id.toString() }); if (!resultado.deletedCount) return res.status(403).json({ erro: 'Você só pode excluir seus próprios posts' }); res.json({ mensagem: 'Post apagado com sucesso' }) } catch (error) { next(error) } })
@@ -133,4 +273,4 @@ app.use((error, _req, res, _next) => { console.error(error); res.status(500).jso
 
 if (process.env.VERCEL !== '1') app.listen(PORT, () => console.log(`API executando em http://localhost:${PORT}`))
 export default app
-if (MONGODB_URI) getDatabase().then(semearBanco).catch(console.error)
+if (MONGODB_URI) getDatabase().then(prepararBanco).catch(console.error)

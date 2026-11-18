@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { API_URL } from '../config/api'
 
 export default function Cadastro() {
-    const [formulario, setFormulario] = useState({ nome_usuario: '', email: '', senha: '' })
+    const [formulario, setFormulario] = useState({ nome: '', nome_usuario: '', email: '', senha: '' })
     const [erro, setErro] = useState('')
     const navigate = useNavigate()
     async function cadastrar(event) {
@@ -21,6 +21,7 @@ export default function Cadastro() {
 
                 <form onSubmit={cadastrar}>
                     {[
+                        ['nome', 'Nome', 'text'],
                         ['nome_usuario', 'Nome de usuário', 'text'],
                         ['email', 'E-mail', 'email'],
                         ['senha', 'Senha (mínimo 6 caracteres)', 'password'],
@@ -32,6 +33,7 @@ export default function Cadastro() {
                                 type={tipo}
                                 className="form-control campo-padrao"
                                 required
+                                autoComplete={campo === 'senha' ? 'new-password' : campo === 'email' ? 'email' : 'name'}
                                 value={formulario[campo]}
                                 onChange={(event) => setFormulario({ ...formulario, [campo]: event.target.value })}
                             />
