@@ -77,6 +77,7 @@ export default function Config() {
             setFotoAtual(perfilAtualizado.foto || '')
             setFoto(null)
             localStorage.setItem('wired_usuario', JSON.stringify(perfilAtualizado))
+            window.dispatchEvent(new Event('wired-user-updated'))
             setMensagem('Perfil atualizado com sucesso!')
         } catch (error) {
             setErro(error.message)

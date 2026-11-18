@@ -188,6 +188,16 @@ app.post('/api/auth/login', async (req, res, next) => {
 
 app.get('/api/perfil', exigirUsuario, async (req, res, next) => { try { res.json(perfilPublico(req.usuario)) } catch (error) { next(error) } })
 
+app.get('/api/usuarios', exigirUsuario, async (_req, res, next) => {
+  try {
+    const db = await getDatabase()
+    const usuarios = await db.collection('users').find().sort({ nome_usuario: 1 }).limit(100).toArray()
+    res.json(usuarios.map(perfilPublico))
+  } catch (error) {
+    next(error)
+  }
+})
+
 app.put('/api/perfil', exigirUsuario, async (req, res, next) => {
   try {
     const nome = req.body.nome?.trim()

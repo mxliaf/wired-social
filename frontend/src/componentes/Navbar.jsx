@@ -1,14 +1,34 @@
 import BotoesBar from "./BotoesBar"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Link } from "react-router-dom"
 import { estaAutenticado } from "../services/auth"
 
 function Navbar() {
     const [menuAberto, setMenuAberto] = useState(false)
+    const [usuario, setUsuario] = useState(() => {
+        try {
+            return JSON.parse(localStorage.getItem('wired_usuario'))
+        } catch {
+            return null
+        }
+    })
     const autenticado = estaAutenticado()
 
+    useEffect(() => {
+        function atualizarUsuario() {
+            try {
+                setUsuario(JSON.parse(localStorage.getItem('wired_usuario')))
+            } catch {
+                setUsuario(null)
+            }
+        }
+
+        window.addEventListener('wired-user-updated', atualizarUsuario)
+        return () => window.removeEventListener('wired-user-updated', atualizarUsuario)
+    }, [])
+
     return (
-        <header id="header" className="navbar navbar-expand-md">
+        <header id="header" className="navbar navbar-expand-lg">
             <div className="container-fluid px-0">
                 <Link
                     to="/home"
@@ -34,7 +54,7 @@ function Navbar() {
                         </button>
 
                         <div id="menuPrincipal" className={`collapse navbar-collapse ${menuAberto ? 'show' : ''}`}>
-                            <BotoesBar onNavigate={() => setMenuAberto(false)} />
+                            <BotoesBar usuario={usuario} onNavigate={() => setMenuAberto(false)} />
                         </div>
                     </>
                 )}

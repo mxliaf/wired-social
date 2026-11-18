@@ -11,7 +11,10 @@ export default function Cadastro() {
         try {
             const resposta = await fetch(`${API_URL}/api/auth/register`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(formulario) })
             const dados = await resposta.json(); if (!resposta.ok) throw new Error(dados.erro)
-            localStorage.setItem('wired_token', dados.token); localStorage.setItem('wired_usuario', JSON.stringify(dados.usuario)); navigate('/feed')
+            localStorage.setItem('wired_token', dados.token)
+            localStorage.setItem('wired_usuario', JSON.stringify(dados.usuario))
+            window.dispatchEvent(new Event('wired-user-updated'))
+            navigate('/feed')
         } catch (error) { setErro(error.message || 'Não foi possível criar a conta') }
     }
     return (

@@ -22,6 +22,7 @@ export default function Login() {
             if (!resposta.ok) throw new Error(dados.erro)
             localStorage.setItem('wired_token', dados.token)
             localStorage.setItem('wired_usuario', JSON.stringify(dados.usuario))
+            window.dispatchEvent(new Event('wired-user-updated'))
             setErro('')
             navigate('/home')
         } catch (error) {

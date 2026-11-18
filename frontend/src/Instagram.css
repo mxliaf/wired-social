@@ -77,6 +77,7 @@ a {
     display: flex;
     gap: 8px;
     list-style: none;
+    padding: 0;
 }
 
 .botoesnav {
@@ -93,6 +94,69 @@ a {
     cursor: pointer;
     box-shadow: 0 4px 12px rgba(36, 36, 36, 0.06);
     transition: transform 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease;
+}
+
+.botoesnav.active {
+    color: rgb(43, 67, 60);
+    border-color: rgba(161, 195, 184, 0.65);
+    background-color: rgba(161, 195, 184, 0.28);
+    box-shadow: 0 5px 14px rgba(43, 67, 60, 0.1);
+    font-weight: 700;
+}
+
+.nav-icone {
+    display: inline-flex;
+    width: 24px;
+    align-items: center;
+    justify-content: center;
+    margin-right: 8px;
+    color: rgb(43, 67, 60);
+    font-size: 19px;
+    line-height: 1;
+}
+
+.nav-item-usuario {
+    display: none;
+}
+
+.nav-usuario {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    padding: 10px;
+    border: 1px solid #e4e7ef;
+    border-radius: 18px;
+    color: #303630;
+    background-color: rgba(255, 255, 255, 0.82);
+}
+
+.nav-usuario img,
+.nav-usuario-foto {
+    display: flex;
+    width: 42px;
+    height: 42px;
+    flex: 0 0 42px;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid rgb(161, 195, 184);
+    border-radius: 50%;
+    background-color: #edf3ef;
+    object-fit: cover;
+    font-weight: 700;
+}
+
+.nav-usuario-texto {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+}
+
+.nav-usuario-texto strong,
+.nav-usuario-texto small {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 #MainContainer {
@@ -631,6 +695,18 @@ a {
     box-shadow: 0 10px 30px rgba(36, 36, 36, 0.1);
 }
 
+.stories-cabecalho {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 22px 0;
+    color: #303630;
+}
+
+.stories-cabecalho small {
+    color: #6f776f;
+}
+
 .stories-lista {
     display: flex;
     gap: 18px;
@@ -679,11 +755,70 @@ a {
     object-fit: cover;
 }
 
+.story-avatar-vazio {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    align-items: center;
+    justify-content: center;
+    border: 3px solid white;
+    border-radius: 50%;
+    color: rgb(43, 67, 60);
+    background-color: #edf3ef;
+    font-size: 24px;
+    font-weight: 700;
+}
+
 .story-adicionar {
     border: 2px dashed rgb(161, 195, 184);
     color: rgb(43, 67, 60);
     background-color: rgba(161, 195, 184, 0.14);
     font-size: 32px;
+}
+
+.feed-composer {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 28px;
+    padding: 16px;
+    border: 1px solid #e4e7ef;
+    border-radius: 24px;
+    background-color: rgba(255, 255, 255, 0.94);
+    box-shadow: 0 10px 30px rgba(36, 36, 36, 0.1);
+}
+
+.feed-composer > img,
+.feed-composer-avatar {
+    display: flex;
+    width: 48px;
+    height: 48px;
+    flex: 0 0 48px;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid rgb(161, 195, 184);
+    border-radius: 50%;
+    color: rgb(43, 67, 60);
+    background-color: #edf3ef;
+    object-fit: cover;
+    font-weight: 700;
+}
+
+.feed-composer-link {
+    min-width: 0;
+    flex: 1;
+    padding: 12px 16px;
+    overflow: hidden;
+    border-radius: 14px;
+    color: #6f776f;
+    background-color: rgba(161, 195, 184, 0.1);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.timeline-total {
+    color: #6f776f;
+    font-size: 14px;
 }
 
 .timeline-titulo {
@@ -963,7 +1098,7 @@ a {
     background-color: transparent;
 }
 
-@media (max-width: 767.98px) {
+@media (max-width: 991.98px) {
     #header {
         min-height: 70px;
         padding: 8px 14px;
@@ -1008,5 +1143,106 @@ a {
     .card-configuracoes {
         padding: 22px !important;
         border-radius: 22px;
+    }
+
+    .nav-item-usuario {
+        display: none;
+    }
+}
+
+@media (min-width: 992px) {
+    .app-layout.autenticado .conteudo-rotas {
+        min-width: 0;
+        margin-left: 254px;
+        padding-top: 0;
+    }
+
+    .app-layout.autenticado #header {
+        top: 16px;
+        bottom: 16px;
+        left: 16px;
+        width: 222px;
+        min-height: 0;
+        padding: 20px 14px;
+        border: 1px solid #e4e7ef;
+        border-radius: 28px;
+        background-color: rgba(255, 255, 255, 0.94);
+        box-shadow: 0 12px 34px rgba(36, 36, 36, 0.12);
+        align-items: stretch;
+        overflow-y: auto;
+    }
+
+    .app-layout.autenticado #header .container-fluid {
+        height: 100%;
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .app-layout.autenticado #logo {
+        justify-content: center;
+        margin: 0 0 26px;
+        padding: 10px;
+    }
+
+    .app-layout.autenticado #textologo {
+        font-size: 38px;
+    }
+
+    .app-layout.autenticado #menuPrincipal {
+        display: flex !important;
+        width: 100%;
+        min-height: 0;
+        flex: 1;
+        align-items: stretch;
+    }
+
+    .app-layout.autenticado #botoesconta {
+        width: 100%;
+        height: 100%;
+        flex-direction: column;
+        justify-content: flex-start;
+        margin: 0 !important;
+        gap: 9px;
+    }
+
+    .app-layout.autenticado .botoesnav {
+        width: 100%;
+        min-height: 48px;
+        justify-content: flex-start;
+        padding: 10px 14px;
+        border-color: transparent;
+        background-color: transparent;
+        box-shadow: none;
+    }
+
+    .app-layout.autenticado .botoesnav:hover,
+    .app-layout.autenticado .botoesnav.active {
+        border-color: rgba(161, 195, 184, 0.5);
+        background-color: rgba(161, 195, 184, 0.22);
+        box-shadow: 0 5px 14px rgba(43, 67, 60, 0.08);
+        transform: translateX(3px);
+    }
+
+    .app-layout.autenticado .nav-item-usuario {
+        display: block;
+        margin-top: auto;
+    }
+}
+
+@media (max-width: 576px) {
+    .feed-composer {
+        padding: 12px;
+        border-radius: 20px;
+    }
+
+    .feed-composer-link {
+        padding: 10px;
+        font-size: 13px;
+    }
+
+    .feed-composer .botao-publicar {
+        min-height: 42px;
+        padding: 9px 12px;
+        font-size: 13px;
     }
 }
