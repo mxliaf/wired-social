@@ -1,7 +1,7 @@
 import { NavLink, useNavigate } from 'react-router-dom'
 import { estaAutenticado, sair } from '../services/auth'
 
-function BotoesBar({ usuario, onNavigate }) {
+function BotoesBar({ usuario, onNavigate, modo = 'topo' }) {
     const navigate = useNavigate()
 
     function sairDaConta() {
@@ -13,11 +13,10 @@ function BotoesBar({ usuario, onNavigate }) {
     if (!estaAutenticado()) return null
 
     return (
-        <ul id="botoesconta" className="navbar-nav ms-auto">
+        <ul className={`botoesconta navbar-nav ${modo === 'topo' ? 'ms-auto' : ''}`}>
             {[
                 ['/feed', '⌂', 'Feed'],
                 ['/home', '◎', 'Perfil'],
-                ['/publicar', '＋', 'Publicar'],
                 ['/config', '⚙', 'Configurações'],
             ].map(([rota, icone, texto]) => (
                 <li className="nav-item" key={rota}>
@@ -43,19 +42,21 @@ function BotoesBar({ usuario, onNavigate }) {
                 </button>
             </li>
 
-            <li className="nav-item nav-item-usuario">
-                <NavLink to="/home" className="nav-usuario text-decoration-none" onClick={onNavigate}>
-                    {usuario?.foto ? (
-                        <img src={usuario.foto} alt="Sua foto de perfil" />
-                    ) : (
-                        <span className="nav-usuario-foto">{usuario?.nome?.charAt(0)?.toUpperCase() || '♡'}</span>
-                    )}
-                    <span className="nav-usuario-texto">
-                        <strong>{usuario?.nome || 'Meu perfil'}</strong>
-                        <small>@{usuario?.nome_usuario || 'usuario'}</small>
-                    </span>
-                </NavLink>
-            </li>
+            {modo === 'lateral' && (
+                <li className="nav-item nav-item-usuario">
+                    <NavLink to="/home" className="nav-usuario text-decoration-none" onClick={onNavigate}>
+                        {usuario?.foto ? (
+                            <img src={usuario.foto} alt="Sua foto de perfil" />
+                        ) : (
+                            <span className="nav-usuario-foto">{usuario?.nome?.charAt(0)?.toUpperCase() || '♡'}</span>
+                        )}
+                        <span className="nav-usuario-texto">
+                            <strong>{usuario?.nome || 'Meu perfil'}</strong>
+                            <small>@{usuario?.nome_usuario || 'usuario'}</small>
+                        </span>
+                    </NavLink>
+                </li>
+            )}
         </ul>
     )
 }

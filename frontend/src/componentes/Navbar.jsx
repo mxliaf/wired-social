@@ -27,39 +27,83 @@ function Navbar() {
         return () => window.removeEventListener('wired-user-updated', atualizarUsuario)
     }, [])
 
-    return (
-        <header id="header" className="navbar navbar-expand-lg">
-            <div className="container-fluid px-0">
-                <Link
-                    to="/home"
-                    id="logo"
-                    className="navbar-brand text-decoration-none"
-                    aria-label="Ir para a página inicial"
-                    onClick={() => setMenuAberto(false)}
-                >
-                    <span id="textologo">Wired</span>
-                </Link>
+    useEffect(() => {
+        if (!menuAberto) return undefined
 
-                {autenticado && (
-                    <>
+        function fecharComEscape(event) {
+            if (event.key === 'Escape') setMenuAberto(false)
+        }
+
+        document.body.classList.add('menu-lateral-aberto')
+        window.addEventListener('keydown', fecharComEscape)
+
+        return () => {
+            document.body.classList.remove('menu-lateral-aberto')
+            window.removeEventListener('keydown', fecharComEscape)
+        }
+    }, [menuAberto])
+
+    return (
+        <>
+            <header id="header" className="navbar">
+                <div className="container-fluid px-0">
+                    {autenticado && (
                         <button
-                            className="navbar-toggler"
+                            className="menu-sanduiche"
                             type="button"
-                            aria-controls="menuPrincipal"
+                            aria-controls="menuLateral"
                             aria-expanded={menuAberto}
-                            aria-label="Abrir menu"
+                            aria-label={menuAberto ? 'Fechar menu' : 'Abrir menu'}
                             onClick={() => setMenuAberto((aberto) => !aberto)}
                         >
-                            <span className="navbar-toggler-icon"></span>
+                            <span></span>
+                            <span></span>
+                            <span></span>
                         </button>
+                    )}
 
-                        <div id="menuPrincipal" className={`collapse navbar-collapse ${menuAberto ? 'show' : ''}`}>
-                            <BotoesBar usuario={usuario} onNavigate={() => setMenuAberto(false)} />
+                    <Link
+                        to="/home"
+                        id="logo"
+                        className="navbar-brand text-decoration-none"
+                        aria-label="Ir para a página inicial"
+                        onClick={() => setMenuAberto(false)}
+                    >
+                        <span id="textologo">Wired</span>
+                    </Link>
+
+                    {autenticado && (
+                        <nav className="nav-topo" aria-label="Navegação principal">
+                            <BotoesBar modo="topo" onNavigate={() => setMenuAberto(false)} />
+                        </nav>
+                    )}
+                </div>
+            </header>
+
+            {autenticado && (
+                <>
+                    <button
+                        type="button"
+                        className={`menu-overlay ${menuAberto ? 'aberto' : ''}`}
+                        aria-label="Fechar menu lateral"
+                        tabIndex={menuAberto ? 0 : -1}
+                        onClick={() => setMenuAberto(false)}
+                    />
+
+                    <aside
+                        id="menuLateral"
+                        className={`menu-lateral ${menuAberto ? 'aberto' : ''}`}
+                        aria-hidden={!menuAberto}
+                    >
+                        <div className="menu-lateral-cabecalho">
+                            <span className="menu-lateral-logo">Wired</span>
+                            <button type="button" aria-label="Fechar menu" onClick={() => setMenuAberto(false)}>×</button>
                         </div>
-                    </>
-                )}
-            </div>
-        </header>
+                        <BotoesBar modo="lateral" usuario={usuario} onNavigate={() => setMenuAberto(false)} />
+                    </aside>
+                </>
+            )}
+        </>
     )
 }
 

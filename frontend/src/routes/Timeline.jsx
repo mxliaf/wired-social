@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
 import PostFeed from '../componentes/PostFeed'
 import { API_URL } from '../config/api'
 import { editarLegenda, excluirPost, listarPosts } from '../services/posts'
@@ -17,6 +16,12 @@ export default function Timeline() {
     const [perfil, setPerfil] = useState(perfilInicial)
     const [carregando, setCarregando] = useState(true)
     const [erro, setErro] = useState('')
+    const [composerAberto, setComposerAberto] = useState(false)
+    const [imagemPublicacao, setImagemPublicacao] = useState('')
+    const [legendaPublicacao, setLegendaPublicacao] = useState('')
+    const [erroPublicacao, setErroPublicacao] = useState('')
+    const [publicando, setPublicando] = useState(false)
+    const [versaoFormulario, setVersaoFormulario] = useState(0)
 
     useEffect(() => {
         async function carregarFeed() {
@@ -66,6 +71,74 @@ export default function Timeline() {
         setPosts((postsAtuais) => postsAtuais.filter((post) => post.id !== id))
     }
 
+    function abrirComposer() {
+        setComposerAberto(true)
+        setErroPublicacao('')
+    }
+
+    function cancelarPublicacao() {
+        setComposerAberto(false)
+        setImagemPublicacao('')
+        setLegendaPublicacao('')
+        setErroPublicacao('')
+        setVersaoFormulario((versao) => versao + 1)
+    }
+
+    function selecionarImagem(event) {
+        const arquivo = event.target.files?.[0]
+
+        if (!arquivo) return
+
+        if (arquivo.size > 2_500_000) {
+            setErroPublicacao('A imagem deve ter no máximo 2,5 MB')
+            event.target.value = ''
+            return
+        }
+
+        const leitor = new FileReader()
+        leitor.onload = () => {
+            setImagemPublicacao(leitor.result)
+            setErroPublicacao('')
+        }
+        leitor.onerror = () => setErroPublicacao('Não foi possível carregar a imagem')
+        leitor.readAsDataURL(arquivo)
+    }
+
+    async function publicar(event) {
+        event.preventDefault()
+
+        if (!imagemPublicacao || !legendaPublicacao.trim()) {
+            setErroPublicacao('Escolha uma imagem e escreva uma legenda')
+            return
+        }
+
+        try {
+            setPublicando(true)
+            setErroPublicacao('')
+
+            const resposta = await fetchComAuth(`${API_URL}/api/posts`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    imagem: imagemPublicacao,
+                    legenda: legendaPublicacao.trim(),
+                }),
+            })
+            const novoPost = await resposta.json()
+
+            if (!resposta.ok) {
+                throw new Error(novoPost.erro || 'Não foi possível publicar')
+            }
+
+            setPosts((postsAtuais) => [novoPost, ...postsAtuais])
+            cancelarPublicacao()
+        } catch (error) {
+            setErroPublicacao(error.message)
+        } finally {
+            setPublicando(false)
+        }
+    }
+
     return (
         <main className="timeline-container container py-4">
             <section className="stories-card" aria-label="Pessoas na Wired">
@@ -74,10 +147,10 @@ export default function Timeline() {
                     <small>{usuarios.length} {usuarios.length === 1 ? 'perfil' : 'perfis'}</small>
                 </div>
                 <div className="stories-lista">
-                    <Link to="/publicar" className="story-item text-decoration-none">
+                    <button type="button" className="story-item story-item-botao" onClick={abrirComposer}>
                         <span className="story-adicionar">+</span>
                         <small>Novo post</small>
-                    </Link>
+                    </button>
 
                     {usuarios.map((usuario) => (
                         <div className="story-item" key={usuario.id}>
@@ -94,19 +167,69 @@ export default function Timeline() {
                 </div>
             </section>
 
-            <section className="feed-composer" aria-label="Criar uma publicação">
-                {perfil.foto ? (
-                    <img src={perfil.foto} alt="Sua foto de perfil" />
-                ) : (
-                    <span className="feed-composer-avatar">{perfil.nome?.charAt(0)?.toUpperCase() || '♡'}</span>
+            <form className={`feed-composer ${composerAberto ? 'aberto' : ''}`} aria-label="Criar uma publicação" onSubmit={publicar}>
+                <div className="feed-composer-linha">
+                    {perfil.foto ? (
+                        <img src={perfil.foto} alt="Sua foto de perfil" />
+                    ) : (
+                        <span className="feed-composer-avatar">{perfil.nome?.charAt(0)?.toUpperCase() || '♡'}</span>
+                    )}
+
+                    {composerAberto ? (
+                        <textarea
+                            className="feed-composer-textarea"
+                            value={legendaPublicacao}
+                            onChange={(event) => setLegendaPublicacao(event.target.value)}
+                            placeholder="Compartilhe algo com a comunidade..."
+                            rows="3"
+                            maxLength="1000"
+                            autoFocus
+                        />
+                    ) : (
+                        <button type="button" className="feed-composer-link" onClick={abrirComposer}>
+                            Compartilhe algo com a comunidade...
+                        </button>
+                    )}
+
+                    {!composerAberto && (
+                        <button type="button" className="botao-publicar" onClick={abrirComposer}>
+                            Publicar
+                        </button>
+                    )}
+                </div>
+
+                {composerAberto && (
+                    <div className="feed-composer-expandido">
+                        {imagemPublicacao && (
+                            <img src={imagemPublicacao} alt="Prévia da publicação" className="feed-composer-preview" />
+                        )}
+
+                        <div className="feed-composer-rodape">
+                            <label className="feed-composer-imagem">
+                                <span aria-hidden="true">▧</span>
+                                {imagemPublicacao ? 'Trocar imagem' : 'Escolher imagem'}
+                                <input
+                                    key={versaoFormulario}
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={selecionarImagem}
+                                />
+                            </label>
+
+                            <div className="feed-composer-acoes">
+                                <button type="button" className="botao-post botao-cancelar" onClick={cancelarPublicacao} disabled={publicando}>
+                                    Cancelar
+                                </button>
+                                <button type="submit" className="botao-publicar" disabled={publicando}>
+                                    {publicando ? 'Publicando...' : 'Publicar'}
+                                </button>
+                            </div>
+                        </div>
+
+                        {erroPublicacao && <p className="text-danger small mb-0">{erroPublicacao}</p>}
+                    </div>
                 )}
-                <Link to="/publicar" className="feed-composer-link text-decoration-none">
-                    Compartilhe algo com a comunidade...
-                </Link>
-                <Link to="/publicar" className="botao-publicar text-decoration-none">
-                    Publicar
-                </Link>
-            </section>
+            </form>
 
             <div className="timeline-titulo">
                 <div>
